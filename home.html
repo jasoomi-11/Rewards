@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Homepage</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    body { background-color: #ffffff; min-height: 100vh; }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background-color: #0b1d61;
+      color: #fff;
+      position: relative;
+      z-index: 1000;
+    }
+
+    .logo { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; }
+    .logo img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Hamburger Menu */
+    .hamburger { display: flex; flex-direction: column; justify-content: space-between; width: 25px; height: 18px; cursor: pointer; z-index: 1001; }
+    .hamburger div { width: 100%; height: 3px; background-color: #fff; border-radius: 2px; transition: all 0.3s ease; }
+
+    /* Slide-out Menu */
+    nav {
+      position: fixed; top: 0; right: -250px;
+      height: 100%; width: 250px; background-color: #0b1d61;
+      flex-direction: column; padding-top: 60px; transition: right 0.3s ease; z-index: 999;
+    }
+    nav a { padding: 15px 20px; color: #fff; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.2); display: block; }
+    nav a:last-child { border-bottom: none; }
+    nav a:hover { background-color: #1a2b8f; }
+
+    /* Overlay */
+    .overlay { display: none; position: fixed; top: 0; left: 0; height: 100%; width: 100%; background: rgba(0,0,0,0.3); z-index: 998; }
+
+    /* User Info Section */
+    .user-info {
+      margin: 20px 0; background: #0b1d61; color: #fff;
+      width: 100%; padding: 25px 40px; display: flex; flex-direction: column;
+      border-radius: 0; box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+    }
+    .user-info h2 { font-size: 26px; margin-bottom: 10px; }
+    .user-info p { font-size: 18px; margin-bottom: 5px; }
+    .loading { color:#fff; margin-top:5px; font-size:16px; }
+
+    /* Cards Row */
+    .cards-row {
+      display: flex; justify-content: space-around; padding: 0 20px 20px 20px; gap: 20px; flex-wrap: wrap;
+    }
+    .card {
+      flex: 1; min-width: 120px; max-width: 160px;
+      background-color: #0b1d61; color: #fff;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+      text-align: center; cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 15px 25px rgba(0,0,0,0.45); }
+    .card h3 { margin: 10px 0 5px 0; font-size: 18px; }
+    .card p { font-size: 14px; color: #ddd; }
+    .card .icon { font-size: 36px; margin-bottom: 10px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <img src="logo.png" alt="Logo">
+    </div>
+    <div class="hamburger" id="hamburger">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </header>
+
+  <!-- Slide-out Menu -->
+  <nav id="menu">
+    <a href="#">Home</a>
+    <a href="#">Task</a>
+    <a href="#">Withdraw</a>
+    <a href="#">Policies</a>
+    <a href="#">Contact</a>
+    <a href="#">Terms</a>
+    <a href="#">About</a>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+
+  <!-- User Info -->
+  <div class="user-info">
+    <h2 id="username">Loading...</h2>
+    <p>Email: <span id="email">...</span></p>
+    <p>Coins: <span id="coins">0</span></p>
+    <div class="loading" id="loading">Fetching user data...</div>
+  </div>
+
+  <!-- Cards Row -->
+  <div class="cards-row">
+    <div class="card" onclick="alert('Profile clicked!')">
+      <div class="icon">👤</div>
+      <h3>Profile</h3>
+      <p>View & edit profile</p>
+    </div>
+    <div class="card" onclick="alert('Withdraw clicked!')">
+      <div class="icon">💸</div>
+      <h3>Withdraw</h3>
+      <p>Withdraw your coins</p>
+    </div>
+    <div class="card" onclick="alert('Rewards clicked!')">
+      <div class="icon">🏆</div>
+      <h3>Rewards</h3>
+      <p>Check rewards</p>
+    </div>
+    <div class="card" onclick="alert('Notifications clicked!')">
+      <div class="icon">🔔</div>
+      <h3>Notifications</h3>
+      <p>View notifications</p>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
+      authDomain: "rewards-6b903.firebaseapp.com",
+      projectId: "rewards-6b903",
+      storageBucket: "rewards-6b903.firebasestorage.app",
+      messagingSenderId: "970714488307",
+      appId: "1:970714488307:web:c464136ef40d65607e8686"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const usernameEl = document.getElementById("username");
+    const emailEl = document.getElementById("email");
+    const coinsEl = document.getElementById("coins");
+    const loadingEl = document.getElementById("loading");
+
+    const hamburger = document.getElementById('hamburger');
+    const menu = document.getElementById('menu');
+    const overlay = document.getElementById('overlay');
+
+    hamburger.addEventListener('click', ()=>{ menu.style.right="0"; overlay.style.display="block"; });
+    overlay.addEventListener('click', ()=>{ menu.style.right="-250px"; overlay.style.display="none"; });
+
+    // Fetch user data
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          usernameEl.textContent = data.username || "Username";
+          emailEl.textContent = data.email || user.email;
+          coinsEl.textContent = data.coins || 0;
+        } else {
+          usernameEl.textContent = "User data not found";
+        }
+      } catch (err) {
+        console.error(err);
+        usernameEl.textContent = "Error loading data";
+      } finally {
+        loadingEl.style.display = "none";
+      }
+    });
+  </script>
+
+</body>
+</html>

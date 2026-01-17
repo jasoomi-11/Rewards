@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forgot Password - Rewards Site</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:#fff; }
+    .logo { margin-bottom:30px; }
+    .logo img { width:120px; }
+    .login-container { background-color:#f7f7f7; padding:40px 50px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); width:350px; }
+    .login-container h2 { text-align:center; margin-bottom:25px; color:#333; }
+    .login-container input { width:100%; padding:14px; margin:12px 0; border-radius:8px; border:1px solid #ccc; outline:none; transition:0.3s; }
+    .login-container input:focus { border-color:#0b1d61; box-shadow:0 0 5px #0b1d61; }
+    .login-container button { width:100%; padding:14px; margin-top:15px; border:none; border-radius:8px; background:#0b1d61; color:#fff; font-size:16px; cursor:pointer; transition:0.3s; }
+    .login-container button:hover { background:#1a2b8f; }
+    .login-container .links { display:flex; justify-content:center; margin-top:12px; font-size:14px; }
+    .login-container .links a { color:#555; text-decoration:none; }
+    .login-container .links a:hover { color:#0b1d61; }
+  </style>
+</head>
+<body>
+
+<div class="logo">
+  <img src="logo.png" alt="Logo">
+</div>
+
+<div class="login-container">
+  <h2>Forgot Password</h2>
+  <form id="forgotForm">
+    <input type="text" id="email" placeholder="Enter your Gmail" required>
+    <button type="submit">Send Reset Email</button>
+  </form>
+  <div class="links">
+    <a href="login.html">Back to Login</a>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+  import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
+    authDomain: "rewards-6b903.firebaseapp.com",
+    projectId: "rewards-6b903",
+    storageBucket: "rewards-6b903.firebasestorage.app",
+    messagingSenderId: "970714488307",
+    appId: "1:970714488307:web:c464136ef40d65607e8686"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const forgotForm = document.getElementById("forgotForm");
+  const emailInput = document.getElementById("email");
+
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = emailInput.value.trim();
+
+    if (!email.endsWith("@gmail.com")) {
+      alert("Please enter a valid Gmail address.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("Password reset email sent! Check your Gmail.");
+    } catch(err) {
+      alert(err.message);
+    }
+  });
+</script>
+
+</body>
+</html>
