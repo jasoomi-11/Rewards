@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login Form</title>
   <script type="module">
-    // Import Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-analytics.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
 
-    // Firebase configuration
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
       authDomain: "rewards-6b903.firebaseapp.com",
@@ -21,41 +21,57 @@
       measurementId: "G-STK1EZ0XBJ"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Login function
-    window.login = function(event) {
+    window.login = async function(event) {
       event.preventDefault();
-      const email = document.getElementById('email').value;
+
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const messageBox = document.getElementById('message');
-
-      messageBox.textContent = ""; // Clear previous message
+      messageBox.textContent = "";
       messageBox.style.color = "#333";
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          messageBox.textContent = "Logged in successfully!";
-          messageBox.style.color = "green";
-          setTimeout(() => {
-            window.location.href = "home.html"; // Redirect after 1 second
-          }, 1000);
-        })
-        .catch((error) => {
-          if (error.code === "auth/user-not-found") {
-            messageBox.textContent = "Please sign up first!";
-          } else if (error.code === "auth/wrong-password") {
-            messageBox.textContent = "Incorrect password!";
-          } else {
-            messageBox.textContent = "Login failed. Please try again.";
-          }
+      try {
+        // Sign in with Firebase Auth
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Fetch user data from Firestore
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          messageBox.textContent = "User data not found. Please sign up first.";
           messageBox.style.color = "red";
-        });
+          return;
+        }
+
+        const data = userSnap.data();
+        messageBox.textContent = `Welcome ${data.username}! Logging in...`;
+        messageBox.style.color = "green";
+
+        // Redirect to home.html after 1 second
+        setTimeout(() => {
+          window.location.href = "home.html";
+        }, 1000);
+
+      } catch (error) {
+        if (error.code === "auth/user-not-found") {
+          messageBox.textContent = "User not found. Please sign up first.";
+        } else if (error.code === "auth/wrong-password") {
+          messageBox.textContent = "Incorrect password!";
+        } else {
+          messageBox.textContent = "Login failed. Try again.";
+        }
+        messageBox.style.color = "red";
+      }
     }
   </script>
+
   <style>
     body {
       margin: 0;
@@ -72,8 +88,7 @@
       background: #f0f0f0;
       padding: 30px;
       border-radius: 20px;
-      box-shadow: 0 15px 25px rgba(0,0,0,0.3), 
-                  0 10px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 15px 25px rgba(0,0,0,0.3), 0 10px 10px rgba(0,0,0,0.2);
       width: 300px;
       text-align: center;
       transform: perspective(1000px) rotateY(0deg);
@@ -82,8 +97,7 @@
 
     .card:hover {
       transform: perspective(1000px) rotateY(15deg) rotateX(5deg);
-      box-shadow: 0 20px 30px rgba(0,0,0,0.4), 
-                  0 12px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 20px 30px rgba(0,0,0,0.4), 0 12px 12px rgba(0,0,0,0.3);
     }
 
     .card h2 {

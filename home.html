@@ -6,7 +6,6 @@
   <title>Dashboard Homepage</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
     body { background-color: #ffffff; min-height: 100vh; }
 
     /* Header */
@@ -43,8 +42,8 @@
 
     /* User Info Section */
     .user-info {
-      margin: 20px 0; background: #0b1d61; color: #fff;
-      width: 100%; padding: 25px 40px; display: flex; flex-direction: column;
+      margin: 20px; background: #0b1d61; color: #fff;
+      width: calc(100% - 40px); padding: 25px 40px; display: flex; flex-direction: column;
       border-radius: 0; box-shadow: 0 8px 25px rgba(0,0,0,0.35);
     }
     .user-info h2 { font-size: 26px; margin-bottom: 10px; }
@@ -69,7 +68,6 @@
     .card h3 { margin: 10px 0 5px 0; font-size: 18px; }
     .card p { font-size: 14px; color: #ddd; }
     .card .icon { font-size: 36px; margin-bottom: 10px; }
-
   </style>
 </head>
 <body>
@@ -130,7 +128,6 @@
     </div>
   </div>
 
-  <!-- JavaScript -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-auth.js";
@@ -140,7 +137,7 @@
       apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
       authDomain: "rewards-6b903.firebaseapp.com",
       projectId: "rewards-6b903",
-      storageBucket: "rewards-6b903.firebasestorage.app",
+      storageBucket: "rewards-6b903.appspot.com",
       messagingSenderId: "970714488307",
       appId: "1:970714488307:web:c464136ef40d65607e8686"
     };
@@ -161,28 +158,32 @@
     hamburger.addEventListener('click', ()=>{ menu.style.right="0"; overlay.style.display="block"; });
     overlay.addEventListener('click', ()=>{ menu.style.right="-250px"; overlay.style.display="none"; });
 
-    // Fetch user data
+    // Check auth state and fetch user data
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
+        // Not logged in
         window.location.href = "login.html";
         return;
       }
 
       try {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
+        // Fetch user data from Firestore using UID
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+        if (userSnap.exists()) {
+          const data = userSnap.data();
           usernameEl.textContent = data.username || "Username";
           emailEl.textContent = data.email || user.email;
-          coinsEl.textContent = data.coins || 0;
+          coinsEl.textContent = data.coins ?? 0;
         } else {
-          usernameEl.textContent = "User data not found";
+          usernameEl.textContent = "No user data found";
+          emailEl.textContent = user.email;
+          coinsEl.textContent = 0;
         }
-      } catch (err) {
-        console.error(err);
-        usernameEl.textContent = "Error loading data";
+      } catch (error) {
+        console.error(error);
+        usernameEl.textContent = "Error loading user data";
       } finally {
         loadingEl.style.display = "none";
       }
