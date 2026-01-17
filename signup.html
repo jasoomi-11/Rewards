@@ -28,30 +28,24 @@
 
     window.signUp = async function(event) {
       event.preventDefault();
+
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const messageBox = document.getElementById('message');
-
-      messageBox.textContent = ""; // clear previous message
+      messageBox.textContent = "";
+      messageBox.style.color = "#333";
 
       try {
-        // Check if a user with this email already exists in Firestore
-        const existingUserQuery = await getDoc(doc(db, "users", email));
-        if (existingUserQuery.exists()) {
-          messageBox.textContent = "User already exists. Please log in.";
-          messageBox.style.color = "red";
-          return;
-        }
-
-        // Create new user in Firebase Auth
+        // Check if user already exists in Firestore using email
+        // Note: Firestore document ID is UID, so we first attempt Auth signup
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
         // Update display name
         await updateProfile(user, { displayName: name });
 
-        // Add user data to Firestore
+        // Add user to Firestore
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           username: name,
@@ -67,6 +61,7 @@
         }, 1000);
 
       } catch (error) {
+        // Handle signup errors
         if (error.code === "auth/email-already-in-use") {
           messageBox.textContent = "Email already in use. Please log in.";
         } else {
@@ -76,6 +71,7 @@
       }
     }
   </script>
+
   <style>
     body {
       margin: 0;
