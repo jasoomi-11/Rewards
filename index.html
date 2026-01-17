@@ -1,26 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Rewards Site</title>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:#fff; }
-    .logo { margin-bottom:30px; }
-    .logo img { width:120px; }
-    .login-container { background-color:#f7f7f7; padding:40px 50px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); width:350px; }
-    .login-container h2 { text-align:center; margin-bottom:25px; color:#333; }
-    .login-container input { width:100%; padding:14px; margin:12px 0; border-radius:8px; border:1px solid #ccc; outline:none; transition:0.3s; }
-    .login-container input:focus { border-color:#0b1d61; box-shadow:0 0 5px #0b1d61; }
-    .login-container button { width:100%; padding:14px; margin-top:15px; border:none; border-radius:8px; background:#0b1d61; color:#fff; font-size:16px; cursor:pointer; transition:0.3s; }
-    .login-container button:hover { background:#1a2b8f; }
-    .login-container .links { display:flex; justify-content:space-between; margin-top:12px; font-size:14px; }
-    .login-container .links a { color:#555; text-decoration:none; cursor:pointer; }
-    .login-container .links a:hover { color:#0b1d61; }
-    .login-container .signup { display:block; text-align:center; margin-top:20px; font-size:15px; color:#0b1d61; text-decoration:none; font-weight:bold; cursor:pointer; }
-    .login-container .signup:hover { color:#1a2b8f; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Rewards Site</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  body { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:#fff; }
+  .logo { margin-bottom:30px; }
+  .logo img { width:120px; }
+  .login-container { background-color:#f7f7f7; padding:40px 50px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); width:350px; position:relative; }
+  .login-container h2 { text-align:center; margin-bottom:25px; color:#333; }
+  .login-container input { width:100%; padding:14px; margin:12px 0; border-radius:8px; border:1px solid #ccc; outline:none; transition:0.3s; }
+  .login-container input:focus { border-color:#0b1d61; box-shadow:0 0 5px #0b1d61; }
+  .login-container button { width:100%; padding:14px; margin-top:15px; border:none; border-radius:8px; background:#0b1d61; color:#fff; font-size:16px; cursor:pointer; transition:0.3s; }
+  .login-container button:hover { background:#1a2b8f; }
+  .login-container .links { display:flex; justify-content:space-between; margin-top:12px; font-size:14px; }
+  .login-container .links a { color:#555; text-decoration:none; cursor:pointer; }
+  .login-container .links a:hover { color:#0b1d61; }
+  .login-container .signup { display:block; text-align:center; margin-top:20px; font-size:15px; color:#0b1d61; text-decoration:none; font-weight:bold; cursor:pointer; }
+  .login-container .signup:hover { color:#1a2b8f; }
+
+  /* Spinner */
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0b1d61;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    display:none;
+    margin: 10px auto;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .message { text-align:center; font-size:14px; color:#0b1d61; margin-top:10px; display:none; }
+</style>
 </head>
 <body>
 
@@ -34,16 +49,20 @@
     <input type="text" id="email" placeholder="Email" required>
     <input type="password" id="password" placeholder="Password" required>
     <button type="submit">Login</button>
-    <div class="links">
-      <a id="forgotPassword">Forgot Password?</a>
-      <a href="signup.html">New to our site? Sign Up</a>
-    </div>
   </form>
+
+  <div class="spinner" id="spinner"></div>
+  <div class="message" id="message">Processing...</div>
+
+  <div class="links">
+    <a href="forget.html">Forgot Password?</a>
+    <a href="sign-up.html">New to our site? Sign Up</a>
+  </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
@@ -60,16 +79,9 @@
   const loginForm = document.getElementById("loginForm");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
-  const forgotPassword = document.getElementById("forgotPassword");
+  const spinner = document.getElementById("spinner");
+  const message = document.getElementById("message");
 
-  // Redirect if already logged in
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      window.location.href = "home.html"; // redirect to home if already logged in
-    }
-  });
-
-  // Login
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = emailInput.value.trim();
@@ -80,30 +92,27 @@
       return;
     }
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Login successful!");
-      window.location.href = "home.html"; // redirect to home
-    } catch(err) {
-      if(err.code === "auth/user-not-found") {
-        alert("User not found! Please sign up first.");
-      } else if(err.code === "auth/wrong-password") {
-        alert("Incorrect password.");
-      } else {
-        alert(err.message);
-      }
-    }
-  });
+    spinner.style.display = "block";
+    message.style.display = "block";
 
-  // Forgot Password
-  forgotPassword.addEventListener("click", async () => {
-    const email = emailInput.value.trim();
-    if (!email) return alert("Enter your email first");
     try {
-      await sendPasswordResetEmail(auth, email);
-      alert("Password reset email sent!");
-    } catch(e) {
-      alert(e.message);
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length === 0) {
+        spinner.style.display = "none";
+        message.style.display = "none";
+        alert("User not found! Please sign up first.");
+        return;
+      }
+
+      await signInWithEmailAndPassword(auth, email, password);
+      message.textContent = "Login successful! Redirecting...";
+      setTimeout(() => { window.location.href = "home.html"; }, 1500);
+
+    } catch(err) {
+      spinner.style.display = "none";
+      message.style.display = "none";
+      if(err.code === "auth/wrong-password") alert("Incorrect password.");
+      else alert(err.message);
     }
   });
 </script>
