@@ -30,7 +30,7 @@ a:hover { text-decoration: underline; }
   <input type="email" id="email" placeholder="Email" required>
   <input type="password" id="password" placeholder="Password" required>
   <button type="submit">Continue</button>
-  <a href="login.html">Already have an account? Login</a>
+  <a href="dashboard.html">Already have an account? Login</a>
 </form>
 
 <script type="module">
@@ -72,7 +72,7 @@ signupForm.addEventListener('submit', async (e)=>{
     }]);
 
     alert('Account created! Redirecting to login...');
-    window.location.href='login.html';
+    window.location.href='dashboard.html';
   } catch(err){
     errorDiv.textContent = err.message;
   }
