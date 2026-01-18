@@ -6,33 +6,22 @@
 <title>Sign Up</title>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  collection,
-  query,
-  where,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
 
-/* Firebase config */
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
   authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903",
-  storageBucket: "rewards-6b903.appspot.com",
-  messagingSenderId: "970714488307",
-  appId: "1:970714488307:web:c464136ef40d65607e8686"
+  projectId: "rewards-6b903"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* 🔐 Device ID (localStorage) */
+// Device ID
 function getDeviceId() {
   let deviceId = localStorage.getItem("deviceId");
   if (!deviceId) {
@@ -42,46 +31,37 @@ function getDeviceId() {
   return deviceId;
 }
 
-/* 🔍 Check if device already used */
+// Check if device already used
 async function isDeviceUsed(deviceId) {
-  const q = query(
-    collection(db, "users"),
-    where("deviceId", "==", deviceId)
-  );
+  const q = query(collection(db, "users"), where("deviceId", "==", deviceId));
   const snap = await getDocs(q);
   return !snap.empty;
 }
 
-/* 🚀 Signup */
+// Signup function
 window.signUp = async (e) => {
   e.preventDefault();
-
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
   const message = document.getElementById("message");
-
   message.textContent = "";
   message.style.color = "#333";
 
   try {
     const deviceId = getDeviceId();
-
-    /* 🔒 Block multiple accounts on same device */
     const used = await isDeviceUsed(deviceId);
+
     if (used) {
-      message.textContent = "Only one account allowed per device.";
+      message.textContent = "Only one account allowed per device!";
       message.style.color = "red";
       return;
     }
 
-    /* Create Auth user */
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const user = cred.user;
-
     await updateProfile(user, { displayName: name });
 
-    /* Save Firestore user */
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
       username: name,
@@ -93,66 +73,41 @@ window.signUp = async (e) => {
 
     message.textContent = "Signup successful! Redirecting...";
     message.style.color = "green";
-
-    setTimeout(() => {
-      window.location.href = "home.html";
-    }, 1000);
+    setTimeout(() => window.location.href = "home.html", 1000);
 
   } catch (err) {
-    message.textContent =
-      err.code === "auth/email-already-in-use"
-        ? "Email already registered. Please login."
-        : err.message;
+    if (err.code === "auth/email-already-in-use") {
+      message.textContent = "Email already registered. Please login.";
+    } else {
+      message.textContent = err.message;
+    }
     message.style.color = "red";
   }
 };
 </script>
 
 <style>
-body{
-  margin:0;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#fff;
-  font-family:Arial;
+body {
+  margin:0; height:100vh; display:flex; justify-content:center; align-items:center;
+  background:#fff; font-family:Arial, sans-serif;
 }
-.card{
-  width:300px;
-  padding:30px;
-  background:#f0f0f0;
-  border-radius:18px;
-  text-align:center;
-  box-shadow:0 15px 25px rgba(0,0,0,.3);
-  transition:.3s;
+.card {
+  width:320px; padding:30px; background:#f0f0f0; border-radius:18px; text-align:center;
+  box-shadow:0 15px 25px rgba(0,0,0,.3); transition:.3s;
 }
-.card:hover{
-  transform:perspective(1000px) rotateY(10deg);
+.card:hover { transform:perspective(1000px) rotateY(10deg); }
+input, button {
+  width:100%; padding:10px; margin:8px 0; border-radius:8px; border:1px solid #ccc; outline:none;
 }
-input,button{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
+button {
+  background:#007bff; color:#fff; border:none; cursor:pointer;
 }
-button{
-  background:#007bff;
-  color:#fff;
-  border:none;
-  cursor:pointer;
-}
-button:hover{background:#0056b3}
-#message{
-  min-height:18px;
-  font-size:14px;
-  margin-top:8px;
-}
-a{color:#007bff;text-decoration:none;font-size:14px}
+button:hover { background:#0056b3; }
+#message { min-height:18px; font-size:14px; margin-top:8px; }
+a {color:#007bff;text-decoration:none;font-size:14px}
 </style>
-</head>
 
+</head>
 <body>
 <div class="card">
   <h2>Sign Up</h2>
@@ -163,7 +118,7 @@ a{color:#007bff;text-decoration:none;font-size:14px}
     <button type="submit">Sign Up</button>
   </form>
   <div id="message"></div>
-  <p>Already have account? <a href="index.html">Login</a></p>
+  <p>Already have account? <a href="login.html">Login</a></p>
 </div>
 </body>
 </html>
