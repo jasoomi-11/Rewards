@@ -28,7 +28,6 @@ header button{
   font-weight:bold;
   cursor:pointer;
 }
-
 .tasks{
   max-width:600px;
   margin:25px auto;
@@ -59,9 +58,27 @@ header button{
   background:#2563eb;
   pointer-events:none;
 }
-.freeze{ background:#ff4c4c; text-align:center; padding:14px; border-radius:12px; margin:20px auto; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,.4); display:none;}
-.spinner-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
-.spinner { border:6px solid rgba(255,255,255,0.3); border-top:6px solid #fff; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; }
+.freeze{ 
+  background:#ff4c4c; 
+  text-align:center; 
+  padding:14px; 
+  border-radius:12px; 
+  margin:20px auto; 
+  font-weight:bold; 
+  box-shadow:0 10px 25px rgba(0,0,0,.4); 
+  display:none;
+}
+.spinner-overlay { 
+  position:fixed; top:0; left:0; right:0; bottom:0; 
+  background:rgba(0,0,0,0.5); display:flex; 
+  align-items:center; justify-content:center; z-index:1000; 
+}
+.spinner { 
+  border:6px solid rgba(255,255,255,0.3); 
+  border-top:6px solid #fff; 
+  border-radius:50%; width:50px; height:50px; 
+  animation:spin 1s linear infinite; 
+}
 @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 </style>
 </head>
@@ -99,12 +116,22 @@ const container = document.getElementById("tasks");
 function showSpinner(val){ spinner.style.display = val ? "flex":"none"; }
 function logout(){ signOut(auth).then(()=>location.href='index.html'); }
 
+function getDeviceHash(){
+  return [
+    navigator.userAgent,
+    navigator.language,
+    navigator.platform,
+    screen.width+"x"+screen.height,
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  ].join("|");
+}
+
 async function fetchTasks(){
   const res = await fetch('tasks.json');
   return await res.json();
 }
 
-onAuthStateChanged(auth, async user=>{
+onAuthStateChanged(auth, async user => {
   if(!user){ location.href='index.html'; return; }
   showSpinner(true);
 
@@ -113,18 +140,22 @@ onAuthStateChanged(auth, async user=>{
   if(!userSnap.exists()){ await signOut(auth); location.href='index.html'; return; }
   const data = userSnap.data();
 
+  // Device hash check
+  const currentHash = getDeviceHash();
+  if(data.status==="flagged" && data.deviceHash && data.deviceHash !== currentHash){
+    document.getElementById("freezeBox").style.display="block";
+  }
+
   const today = new Date().toISOString().slice(0,10);
   if(data.tasksDate !== today){
     data.todayClicks = 0;
-    data.cooldown = 0; // reset cooldown
+    data.cooldown = 0; // reset cooldown daily
     await updateDoc(userRef,{todayClicks:0, tasksDate:today, cooldown:0});
   }
 
   const tasksData = await fetchTasks();
   let todayClicks = data.todayClicks || 0;
   let cooldownEnd = data.cooldown || 0;
-
-  container.innerHTML = "";
 
   async function showNextTask(){
     if(todayClicks >= 20){
@@ -133,38 +164,36 @@ onAuthStateChanged(auth, async user=>{
     }
 
     const now = Date.now();
-    let taskAvailable = now >= cooldownEnd;
+    let available = now >= cooldownEnd;
 
     // Pick random task
-    const randomIndex = Math.floor(Math.random()*tasksData.length);
+    const randomIndex = Math.floor(Math.random() * tasksData.length);
     const task = tasksData[randomIndex];
 
     container.innerHTML = "";
     const div = document.createElement("div");
     div.className = "task";
-    const btnText = taskAvailable ? "Earn" : "Locked - Wait";
+    const btnText = available ? "Earn" : "Locked - Wait";
     div.innerHTML = `<h4>${task.title}</h4><button>${btnText}</button>`;
     container.appendChild(div);
 
     const btn = div.querySelector("button");
-    btn.disabled = !taskAvailable;
+    btn.disabled = !available;
 
-    btn.onclick = async ()=>{
-      if(!taskAvailable){
+    btn.onclick = async () => {
+      if(!available){
         alert("⏳ Task locked! Wait for cooldown.");
         return;
       }
 
-      // Complete task
+      // Update Firebase & local state
       todayClicks += 1;
-      let updatedTotalClicks = (data.totalClicks||0)+1;
-      let updatedTodayEarnings = parseFloat((todayClicks*0.01).toFixed(2));
-      let updatedTotalEarnings = parseFloat((data.totalEarnings||0 + 0.01).toFixed(2));
-
-      // Set cooldown 30 seconds
+      const updatedTotalClicks = (data.totalClicks||0)+1;
+      const updatedTodayEarnings = parseFloat((todayClicks*0.01).toFixed(2));
+      const updatedTotalEarnings = parseFloat((data.totalEarnings||0 + 0.01).toFixed(2));
       const nextCooldown = Date.now() + 30000;
 
-      await updateDoc(userRef,{
+      await updateDoc(userRef, {
         todayClicks,
         totalClicks: updatedTotalClicks,
         todayEarnings: updatedTodayEarnings,
@@ -172,7 +201,6 @@ onAuthStateChanged(auth, async user=>{
         cooldown: nextCooldown
       });
 
-      // Update local copy
       data.todayClicks = todayClicks;
       data.totalClicks = updatedTotalClicks;
       data.todayEarnings = updatedTodayEarnings;
@@ -185,10 +213,16 @@ onAuthStateChanged(auth, async user=>{
 
       alert("✅ Task completed! Next task will unlock in 30 seconds.");
 
-      // Wait 30 seconds then show next task
-      setTimeout(()=>{
-        showNextTask();
-      }, 30000);
+      // Use setInterval to check cooldown even if user refreshes
+      const interval = setInterval(async () => {
+        const userSnapCheck = await getDoc(userRef);
+        const updatedData = userSnapCheck.data();
+        const nowCheck = Date.now();
+        if(updatedData.cooldown <= nowCheck){
+          clearInterval(interval);
+          showNextTask();
+        }
+      }, 1000);
     };
   }
 
