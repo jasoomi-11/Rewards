@@ -106,6 +106,7 @@ const firebaseConfig = {
   authDomain: "rewards-6b903.firebaseapp.com",
   projectId: "rewards-6b903"
 };
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -113,120 +114,128 @@ const db = getFirestore(app);
 const spinner = document.getElementById("spinnerOverlay");
 const container = document.getElementById("tasks");
 
-function showSpinner(val){ spinner.style.display = val ? "flex":"none"; }
-function logout(){ signOut(auth).then(()=>location.href='index.html'); }
+function showSpinner(v){ spinner.style.display = v ? "flex" : "none"; }
 
 function getDeviceHash(){
   return [
     navigator.userAgent,
     navigator.language,
     navigator.platform,
-    screen.width+"x"+screen.height,
+    screen.width + "x" + screen.height,
     Intl.DateTimeFormat().resolvedOptions().timeZone
   ].join("|");
 }
 
 async function fetchTasks(){
-  const res = await fetch('tasks.json');
+  const res = await fetch("tasks.json");
   return await res.json();
 }
 
 onAuthStateChanged(auth, async user => {
-  if(!user){ location.href='index.html'; return; }
+  if(!user){ location.href="index.html"; return; }
   showSpinner(true);
 
   const userRef = doc(db,"users",user.uid);
-  const userSnap = await getDoc(userRef);
-  if(!userSnap.exists()){ await signOut(auth); location.href='index.html'; return; }
-  const data = userSnap.data();
+  const snap = await getDoc(userRef);
+  if(!snap.exists()){ location.href="index.html"; return; }
 
-  // Device hash check
-  const currentHash = getDeviceHash();
-  if(data.status==="flagged" && data.deviceHash && data.deviceHash !== currentHash){
-    document.getElementById("freezeBox").style.display="block";
-  }
-
+  const data = snap.data();
   const today = new Date().toISOString().slice(0,10);
+
+  /* 🔁 RESET DAILY */
   if(data.tasksDate !== today){
+    await updateDoc(userRef,{
+      tasksDate: today,
+      todayClicks: 0,
+      todayEarnings: 0,
+      cooldown: 0,
+      usedTasks: []      // 🔥 reset used tasks
+    });
     data.todayClicks = 0;
-    data.cooldown = 0; // reset cooldown daily
-    await updateDoc(userRef,{todayClicks:0, tasksDate:today, cooldown:0});
+    data.usedTasks = [];
+    data.cooldown = 0;
   }
 
-  const tasksData = await fetchTasks();
+  const tasks = await fetchTasks();
+  let usedTasks = data.usedTasks || [];
   let todayClicks = data.todayClicks || 0;
-  let cooldownEnd = data.cooldown || 0;
 
-  async function showNextTask(){
+  function getUniqueTask(){
+    const remaining = tasks.filter(t => !usedTasks.includes(t.id));
+    if(remaining.length === 0) return null;
+    return remaining[Math.floor(Math.random() * remaining.length)];
+  }
+
+  async function render(){
+    container.innerHTML = "";
+
     if(todayClicks >= 20){
-      container.innerHTML = "<div class='task alert'><h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4></div>";
+      container.innerHTML =
+        "<div class='task alert'><h4>🎉 All tasks completed today. Come tomorrow!</h4></div>";
       return;
     }
 
     const now = Date.now();
-    let available = now >= cooldownEnd;
+    if(data.cooldown && now < data.cooldown){
+      const seconds = Math.ceil((data.cooldown - now) / 1000);
+      container.innerHTML =
+        `<div class="task alert"><h4>⏳ Please wait ${seconds}s for next task</h4></div>`;
 
-    // Pick random task
-    const randomIndex = Math.floor(Math.random() * tasksData.length);
-    const task = tasksData[randomIndex];
+      setTimeout(render, 1000);
+      return;
+    }
 
-    container.innerHTML = "";
+    const task = getUniqueTask();
+    if(!task){
+      container.innerHTML =
+        "<div class='task alert'><h4>No more tasks available</h4></div>";
+      return;
+    }
+
     const div = document.createElement("div");
     div.className = "task";
-    const btnText = available ? "Earn" : "Locked - Wait";
-    div.innerHTML = `<h4>${task.title}</h4><button>${btnText}</button>`;
+    div.innerHTML = `
+      <h4>${task.title}</h4>
+      <button>Earn</button>
+    `;
     container.appendChild(div);
 
     const btn = div.querySelector("button");
-    btn.disabled = !available;
 
     btn.onclick = async () => {
-      if(!available){
-        alert("⏳ Task locked! Wait for cooldown.");
-        return;
-      }
-
-      // Update Firebase & local state
-      todayClicks += 1;
-      const updatedTotalClicks = (data.totalClicks||0)+1;
-      const updatedTodayEarnings = parseFloat((todayClicks*0.01).toFixed(2));
-      const updatedTotalEarnings = parseFloat((data.totalEarnings||0 + 0.01).toFixed(2));
-      const nextCooldown = Date.now() + 30000;
-
-      await updateDoc(userRef, {
-        todayClicks,
-        totalClicks: updatedTotalClicks,
-        todayEarnings: updatedTodayEarnings,
-        totalEarnings: updatedTotalEarnings,
-        cooldown: nextCooldown
-      });
-
-      data.todayClicks = todayClicks;
-      data.totalClicks = updatedTotalClicks;
-      data.todayEarnings = updatedTodayEarnings;
-      data.totalEarnings = updatedTotalEarnings;
-      data.cooldown = nextCooldown;
-
-      btn.textContent = "Completed";
       btn.disabled = true;
       div.classList.add("completed");
 
-      alert("✅ Task completed! Next task will unlock in 30 seconds.");
+      todayClicks += 1;
+      usedTasks.push(task.id);
 
-      // Use setInterval to check cooldown even if user refreshes
-      const interval = setInterval(async () => {
-        const userSnapCheck = await getDoc(userRef);
-        const updatedData = userSnapCheck.data();
-        const nowCheck = Date.now();
-        if(updatedData.cooldown <= nowCheck){
-          clearInterval(interval);
-          showNextTask();
-        }
-      }, 1000);
+      const cooldown = Date.now() + 30000;
+      const totalClicks = (data.totalClicks || 0) + 1;
+      const totalEarnings = parseFloat(((data.totalEarnings || 0) + 0.01).toFixed(2));
+      const todayEarnings = parseFloat((todayClicks * 0.01).toFixed(2));
+
+      await updateDoc(userRef,{
+        todayClicks,
+        totalClicks,
+        todayEarnings,
+        totalEarnings,
+        cooldown,
+        usedTasks
+      });
+
+      data.todayClicks = todayClicks;
+      data.totalClicks = totalClicks;
+      data.totalEarnings = totalEarnings;
+      data.todayEarnings = todayEarnings;
+      data.cooldown = cooldown;
+      data.usedTasks = usedTasks;
+
+      alert("✅ Task completed! Next task in 30 seconds.");
+      render();
     };
   }
 
-  showNextTask();
+  render();
   showSpinner(false);
 });
 </script>
