@@ -1,104 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Shortlink Tasks</title>
-<style>
-body{
-  margin:0;
-  font-family:Segoe UI,sans-serif;
-  background:linear-gradient(180deg,#0b1d61,#08123a);
-  color:#fff;
-}
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:16px 20px;
-  background:#0a184f;
-}
-header h2{color:#00aaff;}
-header button{
-  border:none;
-  padding:8px 16px;
-  border-radius:8px;
-  background:#2563eb;
-  color:#fff;
-  font-weight:bold;
-  cursor:pointer;
-}
-.tasks{
-  max-width:600px;
-  margin:25px auto;
-  padding:0 15px;
-  display:flex;
-  flex-direction:column;
-  gap:15px;
-}
-.task{
-  background:#1e40af;
-  padding:16px;
-  border-radius:10px;
-  text-align:center;
-}
-.task h4{margin:0 0 8px;}
-.task button{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:#22c55e;
-  color:#000;
-  font-weight:bold;
-  cursor:pointer;
-}
-.task.completed{opacity:0.6; pointer-events:none;}
-.task.alert{
-  background:#2563eb;
-  pointer-events:none;
-}
-.freeze{ 
-  background:#ff4c4c; 
-  text-align:center; 
-  padding:14px; 
-  border-radius:12px; 
-  margin:20px auto; 
-  font-weight:bold; 
-  box-shadow:0 10px 25px rgba(0,0,0,.4); 
-  display:none;
-}
-.spinner-overlay { 
-  position:fixed; top:0; left:0; right:0; bottom:0; 
-  background:rgba(0,0,0,0.5); display:flex; 
-  align-items:center; justify-content:center; z-index:1000; 
-}
-.spinner { 
-  border:6px solid rgba(255,255,255,0.3); 
-  border-top:6px solid #fff; 
-  border-radius:50%; width:50px; height:50px; 
-  animation:spin 1s linear infinite; 
-}
-@keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-</style>
-</head>
-<body>
-
-<header>
-  <h2>Daily Shortlink Tasks</h2>
-  <div>
-    <button onclick="location.href='dashboard.html'">Dashboard</button>
-    <button onclick="location.href='index.html'">Logout</button>
-  </div>
-</header>
-
-<div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
-<div class="freeze" id="freezeBox">⚠ Account Frozen – Multiple Devices Detected</div>
-<div class="tasks" id="tasks"></div>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>Daily Shortlink Tasks</title>  
+<style>  
+body{  
+  margin:0;  
+  font-family:Segoe UI,sans-serif;  
+  background:linear-gradient(180deg,#0b1d61,#08123a);  
+  color:#fff;  
+}  
+header{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  padding:16px 20px;  
+  background:#0a184f;  
+}  
+header h2{color:#00aaff;}  
+header button{  
+  border:none;  
+  padding:8px 16px;  
+  border-radius:8px;  
+  background:#2563eb;  
+  color:#fff;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+.tasks{  
+  max-width:600px;  
+  margin:25px auto;  
+  padding:0 15px;  
+  display:flex;  
+  flex-direction:column;  
+  gap:15px;  
+}  
+.task{  
+  background:#1e40af;  
+  padding:16px;  
+  border-radius:10px;  
+  text-align:center;  
+}  
+.task h4{margin:0 0 8px;}  
+.task button{  
+  width:100%;  
+  padding:10px;  
+  border:none;  
+  border-radius:8px;  
+  background:#22c55e;  
+  color:#000;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+.task.completed{opacity:0.6; pointer-events:none;}  
+.task.alert{  
+  background:#2563eb;  
+  pointer-events:none;  
+}  
+.freeze{   
+  background:#ff4c4c;   
+  text-align:center;   
+  padding:14px;   
+  border-radius:12px;   
+  margin:20px auto;   
+  font-weight:bold;   
+  box-shadow:0 10px 25px rgba(0,0,0,.4);   
+  display:none;  
+}  
+.spinner-overlay {   
+  position:fixed; top:0; left:0; right:0; bottom:0;   
+  background:rgba(0,0,0,0.5); display:flex;   
+  align-items:center; justify-content:center; z-index:1000;   
+}  
+.spinner {   
+  border:6px solid rgba(255,255,255,0.3);   
+  border-top:6px solid #fff;   
+  border-radius:50%; width:50px; height:50px;   
+  animation:spin 1s linear infinite;   
+}  
+@keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}  
+</style>  
+</head>  
+<body>  <header>  
+  <h2>Daily Shortlink Tasks</h2>  
+  <div>  
+    <button onclick="location.href='dashboard.html'">Dashboard</button>  
+    <button onclick="location.href='index.html'">Logout</button>  
+  </div>  
+</header>  <div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>  
+<div class="freeze" id="freezeBox">⚠ Account Frozen – Multiple Devices Detected</div>  
+<div class="tasks" id="tasks"></div> 
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -116,16 +111,6 @@ const container = document.getElementById("tasks");
 
 function showSpinner(v){ spinner.style.display = v ? "flex" : "none"; }
 
-function getDeviceHash(){
-  return [
-    navigator.userAgent,
-    navigator.language,
-    navigator.platform,
-    screen.width + "x" + screen.height,
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  ].join("|");
-}
-
 async function fetchTasks(){
   const res = await fetch("tasks.json");
   return await res.json();
@@ -142,14 +127,14 @@ onAuthStateChanged(auth, async user => {
   const data = snap.data();
   const today = new Date().toISOString().slice(0,10);
 
-  /* 🔁 RESET DAILY */
+  /* Reset daily tasks */
   if(data.tasksDate !== today){
     await updateDoc(userRef,{
       tasksDate: today,
       todayClicks: 0,
       todayEarnings: 0,
       cooldown: 0,
-      usedTasks: []      // 🔥 reset used tasks
+      usedTasks: []
     });
     data.todayClicks = 0;
     data.usedTasks = [];
@@ -180,7 +165,6 @@ onAuthStateChanged(auth, async user => {
       const seconds = Math.ceil((data.cooldown - now) / 1000);
       container.innerHTML =
         `<div class="task alert"><h4>⏳ Please wait ${seconds}s for next task</h4></div>`;
-
       setTimeout(render, 1000);
       return;
     }
@@ -196,16 +180,18 @@ onAuthStateChanged(auth, async user => {
     div.className = "task";
     div.innerHTML = `
       <h4>${task.title}</h4>
-      <button>Earn</button>
+      <button>Go to Link</button>
     `;
     container.appendChild(div);
 
     const btn = div.querySelector("button");
 
     btn.onclick = async () => {
+      // Disable button & mark completed
       btn.disabled = true;
       div.classList.add("completed");
 
+      // Update clicks & earnings
       todayClicks += 1;
       usedTasks.push(task.id);
 
@@ -230,7 +216,9 @@ onAuthStateChanged(auth, async user => {
       data.cooldown = cooldown;
       data.usedTasks = usedTasks;
 
-      alert("✅ Task completed! Next task in 30 seconds.");
+      // Redirect to the actual shortlink
+      window.open(task.link, "_blank");
+
       render();
     };
   }
@@ -239,5 +227,7 @@ onAuthStateChanged(auth, async user => {
   showSpinner(false);
 });
 </script>
-</body>
-</html>
+
+
+</body>  
+</html>  
