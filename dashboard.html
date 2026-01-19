@@ -60,101 +60,132 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  updateDoc 
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+/* ================= FIREBASE CONFIG ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
   authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903"
+  projectId: "rewards-6b903",
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* ---------- DEVICE HASH ---------- */
-function getDeviceHash(){
-  return [
-    navigator.userAgent,
-    navigator.language,
-    navigator.platform,
-    screen.width+"x"+screen.height,
-    screen.colorDepth,
-    Intl.DateTimeFormat().resolvedOptions().timeZone,
-    navigator.hardwareConcurrency || "na",
-    navigator.deviceMemory || "na"
-  ].join("|");
+/* ================= DEVICE FINGERPRINT ================= */
+function getDeviceFingerprint(){
+  return {
+    ua: navigator.userAgent,
+    platform: navigator.platform,
+    lang: navigator.language,
+    screen: screen.width + "x" + screen.height,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    cpu: navigator.hardwareConcurrency || "na",
+    ram: navigator.deviceMemory || "na"
+  };
 }
 
-/* ---------- HARD LOGOUT ---------- */
-async function hardLogout(){
-  await signOut(auth).catch(()=>{});
-  localStorage.clear();
-  sessionStorage.clear();
-  location.replace("index.html");
+/* ================= 80% MATCH LOGIC ================= */
+function calculateMatchScore(oldD, newD){
+  let score = 0;
+  if(oldD.ua === newD.ua) score += 25;
+  if(oldD.platform === newD.platform) score += 15;
+  if(oldD.screen === newD.screen) score += 15;
+  if(oldD.timezone === newD.timezone) score += 15;
+  if(oldD.cpu === newD.cpu && oldD.ram === newD.ram) score += 15;
+  if(oldD.lang === newD.lang) score += 15;
+  return score; // /100
 }
 
-/* ---------- AUTH CHECK ---------- */
-onAuthStateChanged(auth, async user=>{
-  if(!user){ hardLogout(); return; }
+/* ================= PREVENT BACK AFTER LOGOUT ================= */
+window.history.pushState(null, "", window.location.href);
+window.onpopstate = function () {
+  window.history.pushState(null, "", window.location.href);
+};
 
-  const ref = doc(db,"users",user.uid);
-  const snap = await getDoc(ref);
-  if(!snap.exists()){ hardLogout(); return; }
+/* ================= AUTH CHECK ================= */
+onAuthStateChanged(auth, async (user) => {
+  if(!user){
+    location.replace("index.html");
+    return;
+  }
+
+  const userRef = doc(db,"users",user.uid);
+  const snap = await getDoc(userRef);
+
+  if(!snap.exists()){
+    await signOut(auth);
+    location.replace("index.html");
+    return;
+  }
 
   const data = snap.data();
-  const currentHash = getDeviceHash();
+  const currentDevice = getDeviceFingerprint();
 
-  let mismatchCount = data.deviceMismatchCount || 0;
-  let status = data.status || "active";
-
-  /* FIRST TIME SAVE */
-  if(!data.deviceHash){
-    await updateDoc(ref,{
-      deviceHash: currentHash,
-      deviceMismatchCount: 0,
+  /* ===== FIRST TIME DEVICE SAVE ===== */
+  if(!data.deviceFingerprint){
+    await updateDoc(userRef,{
+      deviceFingerprint: currentDevice,
       status: "active"
     });
-    return;
   }
 
-  /* HASH MATCH → RESET COUNTER */
-  if(data.deviceHash === currentHash){
-    if(mismatchCount !== 0){
-      await updateDoc(ref,{
-        deviceMismatchCount: 0,
-        status: "active"
+  /* ===== DEVICE CHECK ===== */
+  let freezeUser = false;
+  let score = 100;
+
+  if(data.deviceFingerprint){
+    score = calculateMatchScore(data.deviceFingerprint, currentDevice);
+    if(score < 80){
+      freezeUser = true;
+      await updateDoc(userRef,{
+        status: "frozen",
+        freezeScore: score,
+        freezeAt: new Date()
       });
     }
-    return;
   }
 
-  /* HASH MISMATCH */
-  mismatchCount++;
+  /* ===== UI UPDATE ===== */
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("userInfo").style.display = "block";
+  document.getElementById("cardsRow").style.display = "grid";
 
-  if(mismatchCount === 1){
-    status = "warned";
-  }else if(mismatchCount === 2){
-    status = "flagged";
-  }else if(mismatchCount >= 3){
-    status = "frozen";
+  document.getElementById("name").textContent = data.name || "-";
+  document.getElementById("email").textContent = data.email || "-";
+  document.getElementById("earnings").textContent = "$" + (data.totalEarnings || 0).toFixed(2);
+  document.getElementById("withdraw").textContent = "$" + (data.withdraw || 0).toFixed(2);
+
+  /* ===== TOTAL CLICKS SHOW ===== */
+  if(document.getElementById("totalClicks")){
+    document.getElementById("totalClicks").textContent = data.totalClicks || 0;
   }
 
-  await updateDoc(ref,{
-    deviceMismatchCount: mismatchCount,
-    status,
-    lastDeviceCheck: Date.now()
-  });
-
-  /* UI REACTION */
-  if(status === "frozen"){
-    document.getElementById("freezeBox")?.style.setProperty("display","block");
-    document.querySelectorAll(".card, .task button").forEach(el=>{
-      el.classList.add("disabled");
-      el.disabled = true;
+  /* ===== FREEZE HANDLING ===== */
+  if(freezeUser || data.status === "frozen"){
+    document.getElementById("freezeBox").style.display = "block";
+    document.querySelectorAll(".card").forEach(card=>{
+      card.classList.add("disabled");
+      card.onclick = e => e.preventDefault();
     });
   }
 });
+
+/* ================= LOGOUT ================= */
+document.getElementById("logoutBtn").onclick = async ()=>{
+  await signOut(auth);
+  location.replace("index.html");
+};
 </script>
 </body>
 </html>
