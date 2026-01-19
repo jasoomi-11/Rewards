@@ -62,7 +62,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
@@ -87,82 +87,84 @@ function getFingerprint(){
 }
 
 // ===== Match score
-function scoreMatch(a,b){
-  let s=0;
-  if(a.ua===b.ua)s+=25;
-  if(a.platform===b.platform)s+=15;
-  if(a.screen===b.screen)s+=15;
-  if(a.tz===b.tz)s+=15;
-  if(a.cpu===b.cpu && a.ram===b.ram)s+=15;
-  if(a.lang===b.lang)s+=15;
+function scoreMatch(a, b){
+  let s = 0;
+  if(a.ua === b.ua) s += 25;
+  if(a.platform === b.platform) s += 15;
+  if(a.screen === b.screen) s += 15;
+  if(a.tz === b.tz) s += 15;
+  if(a.cpu === b.cpu && a.ram === b.ram) s += 15;
+  if(a.lang === b.lang) s += 15;
   return s;
 }
 
 // ===== Prevent back after logout
 window.history.pushState(null,"",location.href);
-window.onpopstate=()=>window.history.pushState(null,"",location.href);
+window.onpopstate = () => window.history.pushState(null,"",location.href);
 
-// ===== Auth check
+// ===== Auth check & multiple account detection
 onAuthStateChanged(auth, async user => {
   if(!user) return location.replace("index.html");
 
-  const ref = doc(db,"users",user.uid);
-  const snap = await getDoc(ref);
+  const userRef = doc(db,"users",user.uid);
+  const snap = await getDoc(userRef);
   if(!snap.exists()) return location.replace("index.html");
 
   const data = snap.data();
   const fp = getFingerprint();
 
+  // ===== Initialize missing fields
   const updates = {};
   if(!data.deviceFingerprint) updates.deviceFingerprint = fp;
   if(!data.createdAt) updates.createdAt = serverTimestamp();
   if(!data.totalClicks) updates.totalClicks = 0;
-  if(Object.keys(updates).length) await updateDoc(ref, updates);
+  if(!data.totalEarnings) updates.totalEarnings = 0;
+  if(Object.keys(updates).length) await updateDoc(userRef, updates);
 
-  // ===== Device check with new logic
+  // ===== Check for multiple accounts
   let freeze = false;
-  let flag = false;
-  if(data.deviceFingerprint){
-    const score = scoreMatch(data.deviceFingerprint, fp);
-    if(score >= 80){
-      freeze = true;
-      await updateDoc(ref, { status: "frozen", lastDeviceScore: score });
-    } else if(score >= 60 && score < 80){
-      flag = true;  // warning
-      await updateDoc(ref, { lastDeviceScore: score, flagged: true });
+  const usersSnap = await getDocs(collection(db,"users"));
+  usersSnap.forEach(u => {
+    if(u.id !== user.uid){
+      const other = u.data();
+      if(other.deviceFingerprint){
+        const score = scoreMatch(fp, other.deviceFingerprint);
+        if(score >= 80){
+          freeze = true; // strict freeze
+        }
+      }
     }
-    // score < 60 → do nothing, normal access
+  });
+
+  if(freeze){
+    await updateDoc(userRef, {status: "frozen"});
   }
 
   // ===== Populate UI
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("userInfo").style.display = "block";
-  document.getElementById("cardsRow").style.display = "grid";
+  document.getElementById("loading")?.style.display = "none";
+  document.getElementById("userInfo")?.style.display = freeze ? "none" : "block";
+  document.getElementById("cardsRow")?.style.display = freeze ? "none" : "grid";
 
-  document.getElementById("name").textContent = data.name || "-";
-  document.getElementById("email").textContent = data.email || "-";
-  document.getElementById("earnings").textContent = "$" + (data.totalEarnings || 0).toFixed(2);
-  document.getElementById("withdraw").textContent = "$" + (data.withdraw || 0).toFixed(2);
-  document.getElementById("totalClicks").textContent = data.totalClicks || 0;
-  document.getElementById("joined").textContent = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-";
+  document.getElementById("name") && (document.getElementById("name").textContent = data.name || "-");
+  document.getElementById("email") && (document.getElementById("email").textContent = data.email || "-");
+  document.getElementById("earnings") && (document.getElementById("earnings").textContent = "$" + (data.totalEarnings || 0).toFixed(2));
+  document.getElementById("withdraw") && (document.getElementById("withdraw").textContent = "$" + (data.withdraw || 0).toFixed(2));
+  document.getElementById("totalClicks") && (document.getElementById("totalClicks").textContent = data.totalClicks || 0);
+  document.getElementById("joined") && (document.getElementById("joined").textContent = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-");
 
-  // ===== Show freeze or flag
-  if(freeze){
-    document.getElementById("freezeBox").style.display = "block";
+  // ===== Show freeze message
+  if(freeze || data.status === "frozen"){
+    const freezeBox = document.getElementById("freezeBox");
+    if(freezeBox) freezeBox.style.display = "block";
     document.querySelectorAll(".card").forEach(c => c.classList.add("disabled"));
-  } else if(flag){
-    const flagBox = document.createElement("div");
-    flagBox.className = "freeze";
-    flagBox.textContent = "⚠ Warning: Account used from an unusual device!";
-    document.body.insertBefore(flagBox, document.getElementById("userInfo"));
   }
 });
 
 // ===== Logout
-document.getElementById("logoutBtn").onclick = async () => {
+document.getElementById("logoutBtn")?.addEventListener("click", async () => {
   await signOut(auth);
   location.replace("index.html");
-};
+});
 </script>
 </body>
 </html>

@@ -42,8 +42,8 @@ header button{border:none;padding:8px 16px;border-radius:8px;background:#2563eb;
   <div class="info-box"><span>Total Earnings</span><strong id="totalEarnings">$0.00</strong></div>
 </div>
 
-<div class="freeze" id="freezeBox">⚠ Account Frozen – Multiple Devices Detected</div>
-<div class="warning" id="warnBox">⚠ Warning: Account used from an unusual device!</div>
+<div class="freeze" id="freezeBox">⚠ Account Frozen – Multiple Accounts Detected on This Device</div>
+<div class="warning" id="warnBox">⚠ Warning: Another account detected on this device!</div>
 
 <div class="withdraw-form" id="withdrawForm" style="display:none;">
   <h3>Withdraw Request</h3>
@@ -71,7 +71,7 @@ header button{border:none;padding:8px 16px;border-radius:8px;background:#2563eb;
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
@@ -124,30 +124,32 @@ onAuthStateChanged(auth, async user => {
   const data = snap.data();
   const fp = getFingerprint();
 
-  // First time init
+  // Init
   const updates = {};
   if(!data.deviceFingerprint) updates.deviceFingerprint = fp;
   if(!data.totalClicks) updates.totalClicks = 0;
   if(!data.totalEarnings) updates.totalEarnings = 0;
   if(Object.keys(updates).length) await updateDoc(userRef, updates);
 
-  // Device score check
-  let freeze = false;
-  let flag = false;
-  if(data.deviceFingerprint){
-    const score = calculateScore(data.deviceFingerprint, fp);
-    const mismatch = 100 - score;
-
-    if(mismatch >= 80){        // very suspicious → freeze
-      freeze = true;
-      await updateDoc(userRef,{status:"frozen", lastDeviceScore:score});
-    } else if(mismatch >= 60){ // medium → warning
-      flag = true;
-      await updateDoc(userRef,{lastDeviceScore:score, flagged:true});
+  // ✅ Check for multiple accounts on same device
+  let freeze=false, flag=false;
+  const usersSnap = await getDocs(collection(db,"users"));
+  usersSnap.forEach(u=>{
+    if(u.id !== user.uid){
+      const other = u.data();
+      if(other.deviceFingerprint){
+        const score = calculateScore(fp, other.deviceFingerprint);
+        const mismatch = 100 - score;
+        if(mismatch >= 80) freeze=true; // multiple accounts ≥80% → freeze
+        else if(mismatch >=60) flag=true; // warning
+      }
     }
+  });
+
+  if(freeze){
+    await updateDoc(userRef,{status:"frozen"});
   }
 
-  // Show UI based on check
   showSpinner(false);
   if(freeze || data.status==="frozen"){
     freezeBox.style.display="block";
@@ -161,7 +163,7 @@ onAuthStateChanged(auth, async user => {
     document.getElementById("totalEarnings").textContent = "$" + (data.totalEarnings || 0).toFixed(2);
   }
 
-  // Withdraw submit
+  // Withdraw request
   document.getElementById("submitBtn").onclick = async () => {
     const method = document.getElementById("method").value;
     const username = document.getElementById("username").value.trim();
@@ -202,6 +204,7 @@ onAuthStateChanged(auth, async user => {
     }
     showSpinner(false);
   };
+
 });
 
 // Logout
