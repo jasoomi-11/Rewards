@@ -4,11 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
 body{
-  background:#0b1d61;
+  background: linear-gradient(180deg,#0b1d61,#0a184f);
   min-height:100vh;
   display:flex;
   justify-content:center;
@@ -39,8 +38,10 @@ button{
   color:#fff;
   cursor:pointer;
   position:relative;
+  font-weight:bold;
+  transition:0.3s;
 }
-button:hover{background:#2a3bb5}
+button:hover{background:#2563eb}
 .error{
   color:#ff4c4c;
   text-align:center;
@@ -89,20 +90,24 @@ a{
   <a href="signup.html">Don't have an account? Sign Up</a>
 </form>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 
-<script>
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
   authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903"
-});
+  projectId: "rewards-6b903",
+  storageBucket: "rewards-6b903.appspot.com",
+  messagingSenderId: "970714488307",
+  appId: "1:970714488307:web:c464136ef40d65607e8686",
+  measurementId: "G-STK1EZ0XBJ"
+};
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 const form = document.getElementById("loginForm");
 const errorDiv = document.getElementById("error");
@@ -113,72 +118,67 @@ const submitBtn = document.getElementById("submitBtn");
 const emailInput = document.getElementById("emailInput");
 const passwordInput = document.getElementById("passwordInput");
 
-/* 🔐 DEVICE FINGERPRINT */
-function getFingerprint(){
+function getDeviceHash(){
   const raw = [
     navigator.userAgent,
     navigator.language,
     navigator.platform,
-    screen.width + "x" + screen.height,
+    screen.width+"x"+screen.height,
     Intl.DateTimeFormat().resolvedOptions().timeZone
   ].join("|");
-
   let hash = 0;
   for(let i=0;i<raw.length;i++){
     hash = ((hash<<5)-hash)+raw.charCodeAt(i);
     hash |= 0;
   }
-  return "fp_" + Math.abs(hash);
+  return "fp_"+Math.abs(hash);
 }
 
 form.addEventListener("submit", async e=>{
   e.preventDefault();
-  errorDiv.textContent="";
-
-  spinner.style.display="block";
-  btnText.style.opacity="0.5";
+  errorDiv.textContent = "";
+  spinner.style.display = "inline-block";
+  btnText.style.opacity = "0.5";
   submitBtn.disabled = true;
 
   try{
     const email = emailInput.value.trim();
     const password = passwordInput.value;
-    const currentHash = getFingerprint();
+    const deviceHash = getDeviceHash();
 
-    const cred = await auth.signInWithEmailAndPassword(email,password);
+    const cred = await signInWithEmailAndPassword(auth,email,password);
 
-    const snap = await db.collection("users").doc(cred.user.uid).get();
-    if(!snap.exists){
+    const userRef = doc(db, "users", cred.user.uid);
+    const snap = await getDoc(userRef);
+    if(!snap.exists()){
       await auth.signOut();
-      errorDiv.textContent="Account not found.";
+      errorDiv.textContent = "Account data not found in database.";
       return;
     }
 
-    const user = snap.data();
+    const userData = snap.data();
 
-    // 🔎 DEVICE MISMATCH → SOFT FLAG
-    if(user.deviceHash && user.deviceHash !== currentHash){
-      await db.collection("users").doc(cred.user.uid).update({
-        status:"flagged",
-        lastDeviceMismatch: firebase.firestore.FieldValue.serverTimestamp()
+    // Soft flag if device mismatch
+    if(userData.deviceHash && userData.deviceHash !== deviceHash){
+      await updateDoc(userRef,{
+        status: "flagged",
+        lastDeviceMismatch: serverTimestamp()
       });
     }
 
-    window.location.href="dashboard.html";
+    // Redirect to dashboard
+    window.location.href = "dashboard.html";
 
   }catch(err){
+    console.error(err);
     switch(err.code){
-      case "auth/user-not-found":
-        errorDiv.textContent="User not found.";
-        break;
-      case "auth/wrong-password":
-        errorDiv.textContent="Wrong password.";
-        break;
-      default:
-        errorDiv.textContent="Login failed.";
+      case "auth/user-not-found": errorDiv.textContent="User not found."; break;
+      case "auth/wrong-password": errorDiv.textContent="Wrong password."; break;
+      default: errorDiv.textContent="Login failed."; break;
     }
   }finally{
-    spinner.style.display="none";
-    btnText.style.opacity="1";
+    spinner.style.display = "none";
+    btnText.style.opacity = "1";
     submitBtn.disabled = false;
   }
 });
