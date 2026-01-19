@@ -4,96 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
-body{
-  background: linear-gradient(180deg,#0b1d61,#0a184f);
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  color:#fff;
-}
-form{
-  width:100%;
-  max-width:400px;
-  background:#0d1b2a;
-  padding:35px 25px;
-  border-radius:12px;
-  box-shadow:0 15px 35px rgba(0,0,0,.7);
-  position:relative;
-}
-h1{text-align:center;margin-bottom:20px;color:#00aaff}
-input,button{
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  border:none;
-  font-size:16px;
-  margin-bottom:15px;
-  text-align:center;
-}
-button{
-  background:#1a2b8f;
-  color:#fff;
-  cursor:pointer;
-  position:relative;
-  font-weight:bold;
-  transition:0.3s;
-}
-button:hover{background:#2563eb}
-.error{
-  color:#ff4c4c;
-  text-align:center;
-  margin-bottom:10px;
-}
-a{
-  display:block;
-  text-align:center;
-  margin-top:10px;
-  color:#9ec1ff;
-  text-decoration:none;
-}
-.spinner{
-  border:4px solid rgba(255,255,255,0.3);
-  border-top:4px solid #fff;
-  border-radius:50%;
-  width:18px;
-  height:18px;
-  animation:spin 1s linear infinite;
-  position:absolute;
-  right:16px;
-  top:50%;
-  transform:translateY(-50%);
-  display:none;
-}
-@keyframes spin{
-  0%{transform:translateY(-50%) rotate(0deg)}
-  100%{transform:translateY(-50%) rotate(360deg)}
-}
-</style>
-</head>
-<body>
-
-<form id="loginForm">
-  <h1>Login</h1>
-  <div class="error" id="error"></div>
-
-  <input id="emailInput" type="email" placeholder="Email" required>
-  <input id="passwordInput" type="password" placeholder="Password" required>
-
-  <button type="submit" id="submitBtn">
-    <span id="btnText">Login</span>
-    <div class="spinner" id="spinner"></div>
-  </button>
-
-  <a href="signup.html">Don't have an account? Sign Up</a>
-</form>
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
@@ -107,82 +20,59 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-const form = document.getElementById("loginForm");
-const errorDiv = document.getElementById("error");
-const spinner = document.getElementById("spinner");
-const btnText = document.getElementById("btnText");
-const submitBtn = document.getElementById("submitBtn");
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+  const errorDiv = document.getElementById("error");
+  const btnText = document.getElementById("btnText");
 
-const emailInput = document.getElementById("emailInput");
-const passwordInput = document.getElementById("passwordInput");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorDiv.textContent = "";
+    btnText.textContent = "Logging in...";
 
-function getDeviceHash(){
-  const raw = [
-    navigator.userAgent,
-    navigator.language,
-    navigator.platform,
-    screen.width+"x"+screen.height,
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  ].join("|");
-  let hash = 0;
-  for(let i=0;i<raw.length;i++){
-    hash = ((hash<<5)-hash)+raw.charCodeAt(i);
-    hash |= 0;
-  }
-  return "fp_"+Math.abs(hash);
-}
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-form.addEventListener("submit", async e=>{
-  e.preventDefault();
-  errorDiv.textContent = "";
-  spinner.style.display = "inline-block";
-  btnText.style.opacity = "0.5";
-  submitBtn.disabled = true;
-
-  try{
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const deviceHash = getDeviceHash();
-
-    const cred = await signInWithEmailAndPassword(auth,email,password);
-
-    const userRef = doc(db, "users", cred.user.uid);
-    const snap = await getDoc(userRef);
-    if(!snap.exists()){
-      await auth.signOut();
-      errorDiv.textContent = "Account data not found in database.";
+    if (!email || !password) {
+      errorDiv.textContent = "All fields are required!";
+      btnText.textContent = "Login";
       return;
     }
 
-    const userData = snap.data();
-
-    // Soft flag if device mismatch
-    if(userData.deviceHash && userData.deviceHash !== deviceHash){
-      await updateDoc(userRef,{
-        status: "flagged",
-        lastDeviceMismatch: serverTimestamp()
-      });
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      console.error(err);
+      errorDiv.textContent = "Invalid email or password!";
+    } finally {
+      btnText.textContent = "Login";
     }
-
-    // Redirect to dashboard
-    window.location.href = "dashboard.html";
-
-  }catch(err){
-    console.error(err);
-    switch(err.code){
-      case "auth/user-not-found": errorDiv.textContent="User not found."; break;
-      case "auth/wrong-password": errorDiv.textContent="Wrong password."; break;
-      default: errorDiv.textContent="Login failed."; break;
-    }
-  }finally{
-    spinner.style.display = "none";
-    btnText.style.opacity = "1";
-    submitBtn.disabled = false;
-  }
+  });
 });
 </script>
-
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body { background: linear-gradient(180deg,#0b1d61,#0a184f); min-height:100vh; display:flex; justify-content:center; align-items:center; color:#fff; }
+form { width:100%; max-width:400px; background:#0d1b2a; padding:35px 25px; border-radius:12px; box-shadow:0 15px 35px rgba(0,0,0,.7); position:relative; }
+h1 { text-align:center; margin-bottom:20px; color:#00aaff; }
+input, button { width:100%; padding:12px; border-radius:8px; border:none; font-size:16px; }
+input { margin-bottom:15px; text-align:center; }
+button { background:#1a2b8f; color:#fff; cursor:pointer; position:relative; font-weight:bold; transition:0.3s; }
+button:hover { background:#2563eb; }
+.error { color:#ff4c4c; text-align:center; margin-bottom:10px; }
+a { display:block; text-align:center; margin-top:10px; color:#9ec1ff; text-decoration:none; }
+</style>
+</head>
+<body>
+<form id="loginForm">
+<h1>Login</h1>
+<div class="error" id="error"></div>
+<input type="email" id="email" placeholder="Email" required>
+<input type="password" id="password" placeholder="Password" required>
+<button type="submit"><span id="btnText">Login</span></button>
+<a href="signup.html">Don't have an account? Sign Up</a>
+</form>
 </body>
 </html>

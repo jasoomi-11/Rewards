@@ -3,273 +3,228 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Weekly Tasks</title>
+<title>Daily Shortlink Tasks</title>
 <style>
-body {
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background: linear-gradient(180deg,#0b1d61,#08123a);
-    color:#fff;
+body{
+  margin:0;
+  font-family:Segoe UI,sans-serif;
+  background:linear-gradient(180deg,#0b1d61,#08123a);
+  color:#fff;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px 20px;
+  background:#0a184f;
+}
+header h2{color:#00aaff;}
+header button{
+  border:none;
+  padding:8px 16px;
+  border-radius:8px;
+  background:#2563eb;
+  color:#fff;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-/* HEADER */
-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:18px 25px;
-    background:#0a184f;
-    border-bottom:2px solid #00aaff;
+.tasks{
+  max-width:600px;
+  margin:25px auto;
+  padding:0 15px;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
 }
-header h2 { font-size:26px; color:#00aaff; }
-header .btn-group button {
-    cursor:pointer;
-    border:none;
-    border-radius:10px;
-    padding:8px 18px;
-    background: linear-gradient(145deg,#1a2b8f,#2563eb);
-    color:#fff;
-    font-weight:bold;
-    transition:0.3s;
-    margin-left:10px;
+.task{
+  background:#1e40af;
+  padding:16px;
+  border-radius:10px;
 }
-header .btn-group button:hover { transform:translateY(-2px); }
-
-/* Tasks container */
-.tasks-container {
-    display:flex;
-    flex-direction:column;
-    gap:20px;
-    max-width:650px;
-    margin:30px auto;
-    padding:0 20px;
+.task h4{margin:0 0 8px;}
+.task button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
 }
-.task-card {
-    position:relative;
-    background: linear-gradient(145deg,#1a2b8f,#243bba);
-    border-radius:12px;
-    padding:20px;
-    box-shadow:0 6px 20px rgba(0,0,0,0.5);
-    transition:0.3s;
+.task.completed{opacity:0.6; pointer-events:none;}
+.task.locked button{background:#888; cursor:not-allowed;}
+.task.alert{
+  background:#2563eb;
+  text-align:center;
+  pointer-events:none;
 }
-.task-card h3 { margin:0 0 10px 0; font-size:20px; }
-.progress-container {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:10px;
-    font-size:14px;
-}
-.progress-bar-bg {
-    flex:1;
-    height:14px;
-    background:#334155;
-    border-radius:7px;
-    overflow:hidden;
-}
-.progress-bar-fill {
-    height:100%;
-    background-color:#3b82f6;
-    width:0%;
-    transition:width 0.5s;
-}
-.earn-btn {
-    width:100%;
-    padding:10px 0;
-    font-weight:bold;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    background:#2563eb;
-    color:#fff;
-    transition:0.3s;
-}
-.earn-btn:disabled { opacity:0.4; cursor:not-allowed; }
-.locked { filter:blur(3px); position:relative; }
-.locked::after {
-    content:"🔒 Locked";
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    color:#f87171;
-    font-weight:bold;
-    font-size:18px;
-}
-.completed { filter:none; border:2px solid #22c55e; }
-
-/* Reward card */
-.reward-card {
-    max-width:650px;
-    margin:20px auto;
-    background: linear-gradient(145deg,#1e40af,#2563eb);
-    padding:20px;
-    border-radius:12px;
-    text-align:center;
-    font-weight:bold;
-    font-size:18px;
-}
-
-/* Freeze */
-.freeze{
-    background:#ff4c4c;
-    text-align:center;
-    padding:14px;
-    border-radius:12px;
-    margin:20px auto;
-    font-weight:bold;
-    box-shadow:0 10px 25px rgba(0,0,0,.4);
-}
-
-/* Spinner overlay */
-.spinner-overlay {
-    position:fixed;
-    top:0; left:0; right:0; bottom:0;
-    background:rgba(0,0,0,0.5);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
-    backdrop-filter:blur(4px);
-}
-.spinner {
-    border:6px solid rgba(255,255,255,0.3);
-    border-top:6px solid #fff;
-    border-radius:50%;
-    width:50px;
-    height:50px;
-    animation: spin 1s linear infinite;
-}
+.freeze{ background:#ff4c4c; text-align:center; padding:14px; border-radius:12px; margin:20px auto; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,.4); display:none;}
+.spinner-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.spinner { border:6px solid rgba(255,255,255,0.3); border-top:6px solid #fff; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; }
 @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 
 <header>
-    <h2>Weekly Tasks</h2>
-    <div class="btn-group">
-        
-        <button onclick="logout()">Logout</button>
-    </div>
+  <h2>Daily Shortlink Tasks</h2>
+  <div>
+    <button onclick="location.href='dashboard.html'">Dashboard</button>
+    <button onclick="location.href='index.html'">Logout</button>
+  </div>
 </header>
 
-<!-- Freeze alert -->
-<div id="freezeBox" class="freeze" style="display:none">
-    ⚠ Account Frozen – Multiple Devices Detected
-</div>
+<div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
+<div class="freeze" id="freezeBox">⚠ Account Frozen – Multiple Devices Detected</div>
+<div class="tasks" id="tasks"></div>
 
-<!-- Spinner -->
-<div class="spinner-overlay" id="spinnerOverlay">
-    <div class="spinner"></div>
-</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-<div class="tasks-container" id="tasksContainer">
-    <!-- Day Cards -->
-    <div class="task-card" id="day1"><h3>Day 1</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
-    <div class="task-card" id="day2"><h3>Day 2</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
-    <div class="task-card" id="day3"><h3>Day 3</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
-    <div class="task-card" id="day4"><h3>Day 4</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
-    <div class="task-card" id="day5"><h3>Day 5</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
-    <div class="task-card" id="day6"><h3>Day 6</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
-    <div class="task-card" id="day7"><h3>Day 7</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
-</div>
+const firebaseConfig = {
+  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
+  authDomain: "rewards-6b903.firebaseapp.com",
+  projectId: "rewards-6b903"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-<div class="reward-card" id="rewardCard">
-    Weekly Reward: 500 Rs
-    <div class="notice" id="rewardNotice">Complete all 7 days to unlock reward</div>
-</div>
+const spinner = document.getElementById("spinnerOverlay");
+const freezeBox = document.getElementById("freezeBox");
+const container = document.getElementById("tasks");
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+function showSpinner(val){ spinner.style.display = val ? "flex":"none"; }
+function logout(){ signOut(auth).then(()=>location.href='index.html'); }
 
-<script>
-const firebaseConfig={ apiKey:"AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s", authDomain:"rewards-6b903.firebaseapp.com", projectId:"rewards-6b903"};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-const spinnerOverlay = document.getElementById('spinnerOverlay');
-const tasksContainer = document.getElementById('tasksContainer');
-const rewardCard = document.getElementById('rewardCard');
-const rewardNotice = document.getElementById('rewardNotice');
-const freezeBox = document.getElementById('freezeBox');
-
-function showSpinner(show){ spinnerOverlay.style.display = show?'flex':'none'; }
-function getFingerprint(){
-    const raw=[navigator.userAgent,navigator.language,navigator.platform,screen.width+"x"+screen.height,Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
-    let hash=0; for(let i=0;i<raw.length;i++){ hash=((hash<<5)-hash)+raw.charCodeAt(i); hash|=0; }
-    return "fp_"+Math.abs(hash);
+function getDeviceHash(){
+  return [
+    navigator.userAgent,
+    navigator.language,
+    navigator.platform,
+    screen.width+"x"+screen.height,
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  ].join("|");
 }
 
-auth.onAuthStateChanged(async user=>{
-    if(!user){ location.href='index.html'; return; }
-    showSpinner(true);
+async function fetchTasks(){
+  const res = await fetch('tasks.json');
+  return await res.json();
+}
 
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    if(!userDoc.exists){ await auth.signOut(); location.href='index.html'; return; }
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href='index.html'; return; }
+  showSpinner(true);
 
-    const data = userDoc.data();
-    const currentHash = getFingerprint();
-    const isFlagged = data.status==='flagged' || (data.deviceHash && data.deviceHash!==currentHash);
+  const userRef = doc(db,"users",user.uid);
+  const userSnap = await getDoc(userRef);
+  if(!userSnap.exists()){ await signOut(auth); location.href='index.html'; return; }
+  const data = userSnap.data();
 
-    if(isFlagged){ freezeBox.style.display='block'; }
+  const currentHash = getDeviceHash();
+  if(data.status==="flagged" && data.deviceHash && data.deviceHash!==currentHash){
+    freezeBox.style.display="block";
+  }
 
-    const tasksRef = db.collection('users').doc(user.uid).collection('weeklyTasks');
-    let snap = await tasksRef.get();
-    if(snap.empty){
-        const batch = db.batch();
-        for(let i=1;i<=7;i++){ batch.set(tasksRef.doc('day'+i), {clicks:0,lastClick:null}); }
-        await batch.commit();
-        snap = await tasksRef.get();
-    }
+  const today = new Date().toISOString().slice(0,10);
+  if(data.tasksDate !== today){
+    data.todayClicks = 0;
+    await updateDoc(userRef,{todayClicks:0, tasksDate:today});
+  }
 
-    for(let i=1;i<=7;i++){
-        const card = document.getElementById('day'+i);
-        const dayDoc = snap.docs.find(d=>d.id==='day'+i);
-        let clicks = dayDoc ? dayDoc.data().clicks :0;
-        let completed = clicks>=20;
-        let locked = i>1 && !(snap.docs.find(d=>d.id==='day'+(i-1))?.data()?.clicks>=20);
+  const tasksData = (await fetchTasks()).slice(0,20);
+  container.innerHTML = "";
+  const todayClicks = data.todayClicks || 0;
 
-        // Reset clicks older than 24h
-        if(!completed && dayDoc && dayDoc.data().lastClick){
-            const last = dayDoc.data().lastClick.toDate();
-            if(new Date()-last>24*60*60*1000){ clicks=0; completed=false; await tasksRef.doc('day'+i).update({clicks:0,lastClick:null}); }
-        }
-
-        card.querySelector('span').textContent=`${clicks}/20 Tasks`;
-        card.querySelector('.progress-bar-fill').style.width = `${(clicks/20)*100}%`;
-
-        const btn=card.querySelector('.earn-btn');
-        btn.textContent=completed?'Completed':'Earn';
-        btn.disabled = completed || locked || isFlagged;
-        btn.onclick = ()=>{
-            if(!btn.disabled) location.href=`day${i}.html`;
-        };
-
-        card.classList.remove('locked','completed');
-        if(locked || isFlagged) card.classList.add('locked');
-        if(completed) card.classList.add('completed');
-    }
-
-    const totalCompleted = snap.docs.filter(d=>d.data().clicks>=20).length;
-    if(totalCompleted>=7){
-        rewardNotice.textContent='🎉 Weekly reward unlocked!';
-        rewardCard.style.opacity=1;
-        // Add reward to totalEarnings
-        const rewardAmount = 500;
-        const newTotal = (data.totalEarnings||0)+rewardAmount;
-        await db.collection('users').doc(user.uid).update({totalEarnings:newTotal});
-    }else{
-        rewardNotice.textContent='Complete all 7 days to unlock reward';
-        rewardCard.style.opacity=0.6;
-    }
-
+  if(todayClicks >= 20){
+    const alertDiv = document.createElement("div");
+    alertDiv.className = "task alert";
+    alertDiv.innerHTML = "<h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4>";
+    container.appendChild(alertDiv);
     showSpinner(false);
-});
+    return;
+  }
 
-function logout(){ auth.signOut(); location.href='index.html'; }
-function goBack(){ history.back(); }
+  const taskDivs = [];
+
+  tasksData.forEach((task,index)=>{
+    const div = document.createElement("div");
+    div.className = "task locked";
+    div.id = "task"+task.id;
+    div.innerHTML = `<h4>${task.title}</h4><button>${index===0 ? "Earn" : "Locked"}</button>`;
+    container.appendChild(div);
+    taskDivs.push(div);
+
+    const btn = div.querySelector("button");
+
+    if(todayClicks > index){
+      btn.textContent = "Completed";
+      btn.disabled = true;
+      div.classList.add("completed");
+      div.classList.remove("locked");
+    }
+
+    btn.onclick = async ()=>{
+      if(btn.disabled){
+        alert("⏳ Wait 30 seconds before next task unlocks.");
+        return;
+      }
+
+      let updatedTodayClicks = (data.todayClicks||0)+1;
+      let updatedTotalClicks = (data.totalClicks||0)+1;
+      let updatedTodayEarnings = parseFloat((updatedTodayClicks*0.01).toFixed(2));
+      let updatedTotalEarnings = parseFloat((data.totalEarnings||0 + 0.01).toFixed(2));
+
+      await updateDoc(userRef,{
+        todayClicks: updatedTodayClicks,
+        totalClicks: updatedTotalClicks,
+        todayEarnings: updatedTodayEarnings,
+        totalEarnings: updatedTotalEarnings,
+        tasksDate: today
+      });
+
+      data.todayClicks = updatedTodayClicks;
+      data.totalClicks = updatedTotalClicks;
+      data.todayEarnings = updatedTodayEarnings;
+      data.totalEarnings = updatedTotalEarnings;
+
+      btn.textContent = "Completed";
+      btn.disabled = true;
+      div.classList.add("completed");
+      div.classList.remove("locked");
+
+      // Unlock next task after 30 seconds
+      const nextIndex = index + 1;
+      if(nextIndex < taskDivs.length){
+        setTimeout(()=>{
+          const nextDiv = taskDivs[nextIndex];
+          const nextBtn = nextDiv.querySelector("button");
+          nextBtn.textContent = "Earn";
+          nextBtn.disabled = false;
+          nextDiv.classList.remove("locked");
+          alert("✅ Next task unlocked!");
+        },30000); // 30 seconds
+      } else if(updatedTodayClicks >= 20){
+        container.innerHTML = "";
+        const alertDiv = document.createElement("div");
+        alertDiv.className = "task alert";
+        alertDiv.innerHTML = "<h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4>";
+        container.appendChild(alertDiv);
+      }
+    };
+
+    // Disable all except first
+    if(index !== 0 && todayClicks === 0){
+      btn.disabled = true;
+    }
+  });
+
+  showSpinner(false);
+});
 </script>
 </body>
 </html>
