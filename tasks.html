@@ -41,6 +41,7 @@ header button{
   background:#1e40af;
   padding:16px;
   border-radius:10px;
+  text-align:center;
 }
 .task h4{margin:0 0 8px;}
 .task button{
@@ -54,10 +55,8 @@ header button{
   cursor:pointer;
 }
 .task.completed{opacity:0.6; pointer-events:none;}
-.task.locked button{background:#888; cursor:not-allowed;}
 .task.alert{
   background:#2563eb;
-  text-align:center;
   pointer-events:none;
 }
 .freeze{ background:#ff4c4c; text-align:center; padding:14px; border-radius:12px; margin:20px auto; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,.4); display:none;}
@@ -136,58 +135,55 @@ onAuthStateChanged(auth, async user=>{
     await updateDoc(userRef,{todayClicks:0, tasksDate:today});
   }
 
-  const tasksData = (await fetchTasks()).slice(0,20);
+  const tasksData = await fetchTasks();
+  let todayClicks = data.todayClicks || 0;
+
   container.innerHTML = "";
-  const todayClicks = data.todayClicks || 0;
 
-  if(todayClicks >= 20){
-    const alertDiv = document.createElement("div");
-    alertDiv.className = "task alert";
-    alertDiv.innerHTML = "<h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4>";
-    container.appendChild(alertDiv);
-    showSpinner(false);
-    return;
-  }
-
-  const taskDivs = [];
-
-  tasksData.forEach((task,index)=>{
-    const div = document.createElement("div");
-    div.className = "task locked";
-    div.id = "task"+task.id;
-    div.innerHTML = `<h4>${task.title}</h4><button>${index===0 ? "Earn" : "Locked"}</button>`;
-    container.appendChild(div);
-    taskDivs.push(div);
-
-    const btn = div.querySelector("button");
-
-    if(todayClicks > index){
-      btn.textContent = "Completed";
-      btn.disabled = true;
-      div.classList.add("completed");
-      div.classList.remove("locked");
+  async function showNextTask(){
+    if(todayClicks >= 20){
+      const alertDiv = document.createElement("div");
+      alertDiv.className = "task alert";
+      alertDiv.innerHTML = "<h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4>";
+      container.innerHTML = "";
+      container.appendChild(alertDiv);
+      return;
     }
 
+    // Pick random task
+    const randomIndex = Math.floor(Math.random()*tasksData.length);
+    const task = tasksData[randomIndex];
+
+    container.innerHTML = ""; // show only one task
+    const div = document.createElement("div");
+    div.className = "task";
+    div.innerHTML = `<h4>${task.title}</h4><button>Earn</button>`;
+    container.appendChild(div);
+
+    const btn = div.querySelector("button");
+    let clickable = true;
+
     btn.onclick = async ()=>{
-      if(btn.disabled){
-        alert("⏳ Wait 30 seconds before next task unlocks.");
+      if(!clickable){
+        alert("⏳ Wait 30 seconds for next task!");
         return;
       }
 
-      let updatedTodayClicks = (data.todayClicks||0)+1;
+      clickable = false; // prevent multiple clicks
+      todayClicks += 1;
       let updatedTotalClicks = (data.totalClicks||0)+1;
-      let updatedTodayEarnings = parseFloat((updatedTodayClicks*0.01).toFixed(2));
+      let updatedTodayEarnings = parseFloat((todayClicks*0.01).toFixed(2));
       let updatedTotalEarnings = parseFloat((data.totalEarnings||0 + 0.01).toFixed(2));
 
       await updateDoc(userRef,{
-        todayClicks: updatedTodayClicks,
+        todayClicks,
         totalClicks: updatedTotalClicks,
         todayEarnings: updatedTodayEarnings,
         totalEarnings: updatedTotalEarnings,
         tasksDate: today
       });
 
-      data.todayClicks = updatedTodayClicks;
+      data.todayClicks = todayClicks;
       data.totalClicks = updatedTotalClicks;
       data.todayEarnings = updatedTodayEarnings;
       data.totalEarnings = updatedTotalEarnings;
@@ -195,34 +191,16 @@ onAuthStateChanged(auth, async user=>{
       btn.textContent = "Completed";
       btn.disabled = true;
       div.classList.add("completed");
-      div.classList.remove("locked");
 
-      // Unlock next task after 30 seconds
-      const nextIndex = index + 1;
-      if(nextIndex < taskDivs.length){
-        setTimeout(()=>{
-          const nextDiv = taskDivs[nextIndex];
-          const nextBtn = nextDiv.querySelector("button");
-          nextBtn.textContent = "Earn";
-          nextBtn.disabled = false;
-          nextDiv.classList.remove("locked");
-          alert("✅ Next task unlocked!");
-        },30000); // 30 seconds
-      } else if(updatedTodayClicks >= 20){
-        container.innerHTML = "";
-        const alertDiv = document.createElement("div");
-        alertDiv.className = "task alert";
-        alertDiv.innerHTML = "<h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4>";
-        container.appendChild(alertDiv);
-      }
+      alert("✅ Task completed! Next task will appear after 30 seconds.");
+
+      setTimeout(()=>{
+        showNextTask(); // show new random task
+      },30000);
     };
+  }
 
-    // Disable all except first
-    if(index !== 0 && todayClicks === 0){
-      btn.disabled = true;
-    }
-  });
-
+  showNextTask();
   showSpinner(false);
 });
 </script>
