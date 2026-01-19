@@ -44,7 +44,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
     <div class="info-box"><span>Withdraw</span><strong id="withdraw">$0.00</strong></div>
     <div class="info-box" style="grid-column:span 2"><span>Date Joined</span><strong id="joined">-</strong></div>
   </div>
-  <div id="freezeBox" class="freeze" style="display:none">⚠ Account Frozen – Multiple Devices Detected</div>
+  <div id="freezeBox" class="freeze" style="display:none">⚠ Account Frozen – Multiple Accounts on Same Device Detected</div>
 </div>
 
 <!-- Spinner while loading -->
@@ -59,11 +59,10 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
   <a href="notification.html" class="card" id="notificationCard">🔔 Notifications</a>
 </div>
 
-
 <script type="module">  
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";  
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";  
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";  
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";  
   
 const app = initializeApp({  
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",  
@@ -120,19 +119,22 @@ onAuthStateChanged(auth, async user => {
   if(!data.totalClicks) updates.totalClicks = 0;  
   if(Object.keys(updates).length) await updateDoc(ref, updates);  
   
-  // ===== Device check with new logic  
+  // ===== Multiple account detection  
   let freeze = false;  
-  let flag = false;  
-  if(data.deviceFingerprint){  
-    const score = scoreMatch(data.deviceFingerprint, fp);  
-    if(score >= 80){  
-      freeze = true;  
-      await updateDoc(ref, { status: "frozen", lastDeviceScore: score });  
-    } else if(score >= 60 && score < 80){  
-      flag = true;  // warning  
-      await updateDoc(ref, { lastDeviceScore: score, flagged: true });  
+  const usersSnap = await getDocs(collection(db, "users"));  
+  usersSnap.forEach(docSnap => {  
+    if(docSnap.id === user.uid) return; // skip current user  
+    const u = docSnap.data();  
+    if(u.deviceFingerprint){  
+      const score = scoreMatch(u.deviceFingerprint, fp);  
+      if(score >= 80){ // Another account exists on this device → freeze  
+        freeze = true;  
+      }  
     }  
-    // score < 60 → do nothing, normal access  
+  });  
+  
+  if(freeze){  
+    await updateDoc(ref, {status:"frozen"});  
   }  
   
   // ===== Populate UI  
@@ -147,15 +149,9 @@ onAuthStateChanged(auth, async user => {
   document.getElementById("totalClicks").textContent = data.totalClicks || 0;  
   document.getElementById("joined").textContent = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-";  
   
-  // ===== Show freeze or flag  
-  if(freeze){  
+  if(freeze || data.status==="frozen"){  
     document.getElementById("freezeBox").style.display = "block";  
     document.querySelectorAll(".card").forEach(c => c.classList.add("disabled"));  
-  } else if(flag){  
-    const flagBox = document.createElement("div");  
-    flagBox.className = "freeze";  
-    flagBox.textContent = "⚠ Warning: Account used from an unusual device!";  
-    document.body.insertBefore(flagBox, document.getElementById("userInfo"));  
   }  
 });  
   
@@ -165,8 +161,5 @@ document.getElementById("logoutBtn").onclick = async () => {
   location.replace("index.html");  
 };  
 </script>  
-
-
-
 </body>
 </html>
