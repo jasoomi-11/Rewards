@@ -132,21 +132,22 @@ onAuthStateChanged(auth, async user => {
   if(Object.keys(updates).length) await updateDoc(userRef, updates);
 
   // Device score check
-  let score = 0;
   let freeze = false;
   let flag = false;
   if(data.deviceFingerprint){
-    score = calculateScore(data.deviceFingerprint, fp);
-    if(score >= 80){
+    const score = calculateScore(data.deviceFingerprint, fp);
+    const mismatch = 100 - score;
+
+    if(mismatch >= 80){        // very suspicious → freeze
       freeze = true;
       await updateDoc(userRef,{status:"frozen", lastDeviceScore:score});
-    } else if(score >= 60 && score < 80){
+    } else if(mismatch >= 60){ // medium → warning
       flag = true;
       await updateDoc(userRef,{lastDeviceScore:score, flagged:true});
     }
   }
 
-  // Show UI based on score
+  // Show UI based on check
   showSpinner(false);
   if(freeze || data.status==="frozen"){
     freezeBox.style.display="block";
