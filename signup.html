@@ -3,78 +3,122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up / Login</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<title>Sign Up</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-body { background-color: #0b1d61; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; color: #fff; }
-form { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; background:#0d1b2a; padding:35px 25px; border-radius:12px; box-shadow:0 15px 35px rgba(0,0,0,0.7);}
-h1 { text-align: center; font-size: 28px; margin-bottom: 20px; color: #00aaff; }
-input { padding: 12px 15px; border-radius: 8px; border: none; font-size: 16px; width: 100%; outline: none; transition: all 0.3s ease; color: #0b1d61; text-align:center;}
-input::placeholder { color: #0b1d61; text-align:center; }
-input:focus { box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-button { padding: 14px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer; background: #1a2b8f; color: #fff; transition: background 0.3s ease, transform 0.2s ease; }
-button:hover { background: #2a3bb5; transform: scale(1.03); }
-a { text-align: center; display: block; font-size: 14px; color: #9ec1ff; text-decoration: none; margin-top: 10px; }
-a:hover { text-decoration: underline; }
-.error-msg{ color:#ff4c4c; text-align:center; font-size:14px; margin-bottom:5px;}
-@media (max-width:480px){ input,button{ font-size:15px; padding:12px 15px; } h1{ font-size:24px; } }
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{background:#0b1d61;min-height:100vh;display:flex;justify-content:center;align-items:center;color:#fff}
+form{width:100%;max-width:400px;background:#0d1b2a;padding:35px 25px;border-radius:12px;box-shadow:0 15px 35px rgba(0,0,0,.7);position:relative}
+h1{text-align:center;margin-bottom:20px;color:#00aaff}
+input,button{width:100%;padding:12px;border-radius:8px;border:none;font-size:16px}
+input{margin-bottom:15px;text-align:center}
+button{background:#1a2b8f;color:#fff;cursor:pointer;position:relative}
+button:hover{background:#2a3bb5}
+.error{color:#ff4c4c;text-align:center;margin-bottom:10px}
+a{display:block;text-align:center;margin-top:10px;color:#9ec1ff;text-decoration:none}
+.spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;position:absolute;right:15px;top:50%;transform:translateY(-50%);display:none}
+@keyframes spin{0%{transform:translateY(-50%) rotate(0deg)}100%{transform:translateY(-50%) rotate(360deg)}}
 </style>
 </head>
 <body>
 
 <form id="signupForm">
-  <h1>Sign Up / Login</h1>
-  <div id="error" class="error-msg"></div>
+  <h1>Sign Up</h1>
+  <div class="error" id="error"></div>
   <input type="text" id="name" placeholder="Full Name" required>
   <input type="email" id="email" placeholder="Email" required>
   <input type="password" id="password" placeholder="Password" required>
-  <button type="submit">Continue</button>
-  <a href="dashboard.html">Already have an account? Login</a>
+  <button type="submit" id="submitBtn">
+    <span id="btnText">Create Account</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+  <a href="index.html">Already have an account? Login</a>
 </form>
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-const SUPABASE_URL = 'https://dmoktpmrrsrjjspipddd.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_04Ks9PDsOCUAfT3A_K-Mtg_LBPTNOGS';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+<script>
+const firebaseConfig = {
+  apiKey:"AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
+  authDomain:"rewards-6b903.firebaseapp.com",
+  projectId:"rewards-6b903",
+  storageBucket:"rewards-6b903.appspot.com",
+  messagingSenderId:"970714488307",
+  appId:"1:970714488307:web:c464136ef40d65607e8686"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const signupForm = document.getElementById('signupForm');
-const passwordInput = document.getElementById('password');
-const errorDiv = document.getElementById('error');
+const form=document.getElementById('signupForm');
+const errorDiv=document.getElementById('error');
+const spinner=document.getElementById('spinner');
+const btnText=document.getElementById('btnText');
 
-function generateDeviceID(){ return btoa(navigator.userAgent + Math.random()); }
+// Fingerprint hash
+function getDeviceHash(){
+  const raw=[navigator.userAgent,navigator.language,navigator.platform,screen.width+"x"+screen.height,Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
+  let hash=0;for(let i=0;i<raw.length;i++){hash=((hash<<5)-hash)+raw.charCodeAt(i);hash|=0;}
+  return "fp_"+Math.abs(hash);
+}
 
-signupForm.addEventListener('submit', async (e)=>{
+form.addEventListener('submit',async e=>{
   e.preventDefault();
   errorDiv.textContent='';
+  spinner.style.display='inline-block';
+  btnText.style.opacity='0.5';
+  form.querySelector('button').disabled=true;
 
-  const name = document.getElementById('name').value;
-  const email = document.getElementById('email').value;
-  const password = passwordInput.value;
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const deviceHash=getDeviceHash();
 
-  try {
-    // Signup in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-    if(authError) throw authError;
+  try{
+    // Check if device already used
+    const snap=await db.collection("users").where("deviceHash","==",deviceHash).get();
+    let status=snap.empty?"active":"flagged";
 
-    // Insert in Users table automatically
-    await supabase.from('Users').insert([{
-      id: authData.user.id,
-      name,
-      email,
-      totalClicks:0,
-      todayClicks:0,
+    // Create Firebase Auth user
+    const cred=await auth.createUserWithEmailAndPassword(email,password);
+    await cred.user.updateProfile({displayName:name});
+
+    const today=new Date();
+    const todayStr=today.toISOString().split('T')[0];
+
+    // Store user doc
+    await db.collection("users").doc(cred.user.uid).set({
+      uid:cred.user.uid,
+      name:name,
+      email:email,
+      deviceHash:deviceHash,
+      status:status,
+      totalEarnings:0,
+      todayEarnings:0,
       withdraw:0,
-      deviceID:generateDeviceID(),
-      createdAt:new Date()
-    }]);
+      weeklyProgress:0,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-    alert('Account created! Redirecting to login...');
+    // Create weekly tasks subcollection
+    const batch=db.batch();
+    const tasksRef=db.collection("users").doc(cred.user.uid).collection("weeklyTasks");
+    for(let i=1;i<=7;i++){
+      batch.set(tasksRef.doc("day"+i),{clicks:0,lastClick:null});
+    }
+    await batch.commit();
+
+    alert('Account created successfully!');
     window.location.href='dashboard.html';
-  } catch(err){
-    errorDiv.textContent = err.message;
+
+  }catch(err){
+    console.log(err.message); // backend log
+  }finally{
+    spinner.style.display='none';
+    btnText.style.opacity='1';
+    form.querySelector('button').disabled=false;
   }
 });
 </script>
