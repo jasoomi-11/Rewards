@@ -8,24 +8,26 @@
 body {
     margin:0;
     font-family:'Segoe UI',sans-serif;
-    background: linear-gradient(180deg,#0b0f25,#0b1d61);
+    background: linear-gradient(180deg,#0b1d61,#08123a);
     color:#fff;
 }
+
+/* HEADER */
 header {
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:20px 30px;
+    padding:18px 25px;
     background:#0a184f;
-    border-bottom:2px solid #3b82f6;
+    border-bottom:2px solid #00aaff;
 }
-header h2 { font-size:28px; color:#3b82f6; }
+header h2 { font-size:26px; color:#00aaff; }
 header .btn-group button {
     cursor:pointer;
     border:none;
     border-radius:10px;
     padding:8px 18px;
-    background: linear-gradient(145deg,#1e40af,#2563eb);
+    background: linear-gradient(145deg,#1a2b8f,#2563eb);
     color:#fff;
     font-weight:bold;
     transition:0.3s;
@@ -41,11 +43,10 @@ header .btn-group button:hover { transform:translateY(-2px); }
     max-width:650px;
     margin:30px auto;
     padding:0 20px;
-    transition: filter 0.3s ease;
 }
 .task-card {
     position:relative;
-    background: linear-gradient(145deg,#1e293b,#111827);
+    background: linear-gradient(145deg,#1a2b8f,#243bba);
     border-radius:12px;
     padding:20px;
     box-shadow:0 6px 20px rgba(0,0,0,0.5);
@@ -109,7 +110,18 @@ header .btn-group button:hover { transform:translateY(-2px); }
     font-size:18px;
 }
 
-/* Spinner + overlay */
+/* Freeze */
+.freeze{
+    background:#ff4c4c;
+    text-align:center;
+    padding:14px;
+    border-radius:12px;
+    margin:20px auto;
+    font-weight:bold;
+    box-shadow:0 10px 25px rgba(0,0,0,.4);
+}
+
+/* Spinner overlay */
 .spinner-overlay {
     position:fixed;
     top:0; left:0; right:0; bottom:0;
@@ -136,18 +148,23 @@ header .btn-group button:hover { transform:translateY(-2px); }
 <header>
     <h2>Weekly Tasks</h2>
     <div class="btn-group">
-        <button onclick="goBack()">Back</button>
+        
         <button onclick="logout()">Logout</button>
     </div>
 </header>
 
-<!-- Spinner overlay -->
+<!-- Freeze alert -->
+<div id="freezeBox" class="freeze" style="display:none">
+    ⚠ Account Frozen – Multiple Devices Detected
+</div>
+
+<!-- Spinner -->
 <div class="spinner-overlay" id="spinnerOverlay">
     <div class="spinner"></div>
 </div>
 
 <div class="tasks-container" id="tasksContainer">
-    <!-- 7 Static Day Cards -->
+    <!-- Day Cards -->
     <div class="task-card" id="day1"><h3>Day 1</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
     <div class="task-card" id="day2"><h3>Day 2</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
     <div class="task-card" id="day3"><h3>Day 3</h3><div class="progress-container"><span>0/20 Tasks</span><div class="progress-bar-bg"><div class="progress-bar-fill"></div></div></div><button class="earn-btn">Earn</button></div>
@@ -162,7 +179,6 @@ header .btn-group button:hover { transform:translateY(-2px); }
     <div class="notice" id="rewardNotice">Complete all 7 days to unlock reward</div>
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -177,9 +193,9 @@ const spinnerOverlay = document.getElementById('spinnerOverlay');
 const tasksContainer = document.getElementById('tasksContainer');
 const rewardCard = document.getElementById('rewardCard');
 const rewardNotice = document.getElementById('rewardNotice');
+const freezeBox = document.getElementById('freezeBox');
 
 function showSpinner(show){ spinnerOverlay.style.display = show?'flex':'none'; }
-
 function getFingerprint(){
     const raw=[navigator.userAgent,navigator.language,navigator.platform,screen.width+"x"+screen.height,Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
     let hash=0; for(let i=0;i<raw.length;i++){ hash=((hash<<5)-hash)+raw.charCodeAt(i); hash|=0; }
@@ -187,7 +203,7 @@ function getFingerprint(){
 }
 
 auth.onAuthStateChanged(async user=>{
-    if(!user){ alert('Login required'); location.href='index.html'; return; }
+    if(!user){ location.href='index.html'; return; }
     showSpinner(true);
 
     const userDoc = await db.collection('users').doc(user.uid).get();
@@ -195,7 +211,9 @@ auth.onAuthStateChanged(async user=>{
 
     const data = userDoc.data();
     const currentHash = getFingerprint();
-    const isFlagged = data.deviceHash!==currentHash || data.status==='flagged';
+    const isFlagged = data.status==='flagged' || (data.deviceHash && data.deviceHash!==currentHash);
+
+    if(isFlagged){ freezeBox.style.display='block'; }
 
     const tasksRef = db.collection('users').doc(user.uid).collection('weeklyTasks');
     let snap = await tasksRef.get();
@@ -207,13 +225,13 @@ auth.onAuthStateChanged(async user=>{
     }
 
     for(let i=1;i<=7;i++){
-        const card=document.getElementById('day'+i);
+        const card = document.getElementById('day'+i);
         const dayDoc = snap.docs.find(d=>d.id==='day'+i);
         let clicks = dayDoc ? dayDoc.data().clicks :0;
         let completed = clicks>=20;
         let locked = i>1 && !(snap.docs.find(d=>d.id==='day'+(i-1))?.data()?.clicks>=20);
 
-        // Reset older than 24h
+        // Reset clicks older than 24h
         if(!completed && dayDoc && dayDoc.data().lastClick){
             const last = dayDoc.data().lastClick.toDate();
             if(new Date()-last>24*60*60*1000){ clicks=0; completed=false; await tasksRef.doc('day'+i).update({clicks:0,lastClick:null}); }
@@ -221,9 +239,13 @@ auth.onAuthStateChanged(async user=>{
 
         card.querySelector('span').textContent=`${clicks}/20 Tasks`;
         card.querySelector('.progress-bar-fill').style.width = `${(clicks/20)*100}%`;
+
         const btn=card.querySelector('.earn-btn');
         btn.textContent=completed?'Completed':'Earn';
-        btn.disabled=locked || isFlagged || completed;
+        btn.disabled = completed || locked || isFlagged;
+        btn.onclick = ()=>{
+            if(!btn.disabled) location.href=`day${i}.html`;
+        };
 
         card.classList.remove('locked','completed');
         if(locked || isFlagged) card.classList.add('locked');
@@ -231,8 +253,17 @@ auth.onAuthStateChanged(async user=>{
     }
 
     const totalCompleted = snap.docs.filter(d=>d.data().clicks>=20).length;
-    rewardNotice.textContent = totalCompleted>=7?'🎉 Weekly reward unlocked!':'Complete all 7 days to unlock reward';
-    rewardCard.style.opacity = totalCompleted>=7?1:0.6;
+    if(totalCompleted>=7){
+        rewardNotice.textContent='🎉 Weekly reward unlocked!';
+        rewardCard.style.opacity=1;
+        // Add reward to totalEarnings
+        const rewardAmount = 500;
+        const newTotal = (data.totalEarnings||0)+rewardAmount;
+        await db.collection('users').doc(user.uid).update({totalEarnings:newTotal});
+    }else{
+        rewardNotice.textContent='Complete all 7 days to unlock reward';
+        rewardCard.style.opacity=0.6;
+    }
 
     showSpinner(false);
 });
