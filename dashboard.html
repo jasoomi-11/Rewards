@@ -61,33 +61,40 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
   authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903",
-  storageBucket: "rewards-6b903.appspot.com",
-  messagingSenderId: "970714488307",
-  appId: "1:970714488307:web:c464136ef40d65607e8686",
-  measurementId: "G-STK1EZ0XBJ"
+  projectId: "rewards-6b903"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* Strong device hash including timezone, memory, hardware, fonts */
-function getDeviceHash() {
-  const ua = navigator.userAgent;
-  const lang = navigator.language;
-  const platform = navigator.platform;
-  const screenRes = screen.width + "x" + screen.height;
-  const colorDepth = screen.colorDepth;
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const hardware = navigator.hardwareConcurrency || "na";
-  const memory = navigator.deviceMemory || "na";
-  return [ua, lang, platform, screenRes, colorDepth, timezone, hardware, memory].join("|");
+/* 🔐 Device fingerprint as object */
+function getDeviceFingerprint(){
+  return {
+    ua: navigator.userAgent,
+    lang: navigator.language,
+    platform: navigator.platform,
+    screen: screen.width + "x" + screen.height,
+    depth: screen.colorDepth,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    cpu: navigator.hardwareConcurrency || "na",
+    mem: navigator.deviceMemory || "na"
+  };
+}
+
+/* 🔥 80% match logic */
+function deviceMatchPercent(stored, current){
+  let total = 0, matched = 0;
+  for(const key in stored){
+    total++;
+    if(stored[key] === current[key]) matched++;
+  }
+  return Math.round((matched / total) * 100);
 }
 
 onAuthStateChanged(auth, async user=>{
@@ -98,25 +105,50 @@ onAuthStateChanged(auth, async user=>{
   if(!snap.exists()){ await signOut(auth); location.href="index.html"; return; }
 
   const data = snap.data();
-  const currentHash = getDeviceHash();
 
-  /* Flag logic: status flagged OR device hash mismatch */
-  let isFlagged = data.status === "flagged";
-  if(!isFlagged && data.deviceHash !== currentHash) isFlagged = true;
+  const currentFP = getDeviceFingerprint();
+  const storedFP = data.deviceFingerprint;
 
-  /* Populate info */
-  document.getElementById("name").textContent = data.name;
-  document.getElementById("email").textContent = data.email;
-  document.getElementById("joined").textContent = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString() : "-";
-  document.getElementById("earnings").textContent = "$"+(isFlagged?0:data.totalEarnings||0).toFixed(2);
-  document.getElementById("withdraw").textContent = "$"+(isFlagged?0:data.withdraw||0).toFixed(2);
+  let isFlagged = false;
+
+  if(!storedFP){
+    // first time safety
+    isFlagged = true;
+  } else {
+    const matchPercent = deviceMatchPercent(storedFP, currentFP);
+    if(matchPercent < 80) isFlagged = true;
+  }
+
+  /* Populate user info */
+  document.getElementById("name").textContent = data.name || "-";
+  document.getElementById("email").textContent = data.email || "-";
+  document.getElementById("joined").textContent =
+    data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString() : "-";
+
+  /* NEW FIELD */
+  document.getElementById("earnings").textContent =
+    "$" + (isFlagged ? "0.00" : (data.totalEarnings || 0).toFixed(2));
+
+  document.getElementById("withdraw").textContent =
+    "$" + (isFlagged ? "0.00" : (data.withdraw || 0).toFixed(2));
+
+  /* 👇 ADD TOTAL CLICKS */
+  if(!document.getElementById("totalClicks")){
+    const box = document.createElement("div");
+    box.className = "info-box";
+    box.innerHTML = `<span>Total Clicks</span><strong id="totalClicks">0</strong>`;
+    document.querySelector(".info-grid").appendChild(box);
+  }
+
+  document.getElementById("totalClicks").textContent =
+    isFlagged ? "0" : (data.totalClicks || 0);
 
   if(isFlagged){
     document.getElementById("freezeBox").style.display = "block";
-    ["withdrawCard","rewardCard","taskCard","notificationCard"].forEach(id=>document.getElementById(id).classList.add("disabled"));
+    ["withdrawCard","rewardCard","taskCard","notificationCard"]
+      .forEach(id => document.getElementById(id).classList.add("disabled"));
   }
 
-  /* Show content after data loaded */
   document.getElementById("loading").style.display = "none";
   document.getElementById("userInfo").style.display = "block";
   document.getElementById("cardsRow").style.display = "grid";
