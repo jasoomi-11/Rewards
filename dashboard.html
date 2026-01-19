@@ -5,23 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body{background:linear-gradient(135deg,#0b1d61,#08123a);color:#fff;min-height:100vh;}
 header{display:flex;justify-content:space-between;align-items:center;padding:18px 25px;background:#0a184f;border-bottom:2px solid #00aaff;}
 .logout-btn{background:#ff4c4c;border:none;padding:10px 18px;border-radius:8px;color:#fff;cursor:pointer;}
-.user-info{max-width:720px;margin:30px auto;background:#101e5a;padding:25px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.4);}
+.logout-btn:hover{opacity:.9}
+.user-info{max-width:720px;margin:30px auto;background:#101e5a;padding:25px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.4);position:relative;}
 .user-info h2{text-align:center;color:#00aaff;margin-bottom:20px;}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
 .info-box{background:#1a2b8f;padding:15px;border-radius:12px;}
 .info-box span{font-size:13px;opacity:.8;}
 .info-box strong{display:block;font-size:17px;margin-top:5px;}
 .highlight{background:linear-gradient(135deg,#00aaff,#0066ff);}
-.freeze{background:#ff4c4c;text-align:center;padding:14px;border-radius:12px;margin-top:20px;font-weight:bold;}
+.freeze{background:#ff4c4c;text-align:center;padding:14px;border-radius:12px;margin-top:20px;font-weight:bold;box-shadow:0 10px 25px rgba(0,0,0,.4);}
 .cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;max-width:850px;margin:30px auto;padding:0 20px;}
-.card{background:linear-gradient(135deg,#1a2b8f,#243bba);padding:28px;border-radius:18px;text-align:center;text-decoration:none;color:#fff;font-weight:600;cursor:pointer;}
-.card.disabled{opacity:.4;pointer-events:none;}
-.spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:25px;height:25px;animation:spin 1s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
+.card{background:linear-gradient(135deg,#1a2b8f,#243bba);padding:28px 20px;border-radius:18px;text-align:center;cursor:pointer;transition:.25s ease;box-shadow:0 15px 30px rgba(0,0,0,.35);font-size:17px;font-weight:600;text-decoration:none;color:#fff;position:relative;}
+.card:hover{transform:translateY(-6px);box-shadow:0 25px 45px rgba(0,0,0,.5);}
+.card:active{transform:scale(.96);}
+.card.disabled{opacity:.4;pointer-events:none;transform:none;box-shadow:none;}
+.spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:20px;height:20px;animation:spin 1s linear infinite;position:absolute;right:15px;top:50%;transform:translateY(-50%);}
+@keyframes spin{0%{transform:translateY(-50%) rotate(0deg);}100%{transform:translateY(-50%) rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -33,46 +36,27 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 
 <div class="user-info" id="userInfo" style="display:none;">
   <h2>User Info</h2>
-
   <div class="info-grid">
     <div class="info-box"><span>Name</span><strong id="name">-</strong></div>
     <div class="info-box"><span>Email</span><strong id="email">-</strong></div>
-
-    <div class="info-box highlight">
-      <span>Total Earnings</span>
-      <strong id="earnings">$0.00</strong>
-    </div>
-
-    <div class="info-box highlight">
-      <span>Total Clicks</span>
-      <strong id="totalClicks">0</strong>
-    </div>
-
-    <div class="info-box">
-      <span>Withdraw</span>
-      <strong id="withdraw">$0.00</strong>
-    </div>
-
-    <div class="info-box" style="grid-column:span 2">
-      <span>Date Joined</span>
-      <strong id="joined">-</strong>
-    </div>
+    <div class="info-box highlight"><span>Total Earnings</span><strong id="earnings">$0.00</strong></div>
+    <div class="info-box highlight"><span>Total Clicks</span><strong id="totalClicks">0</strong></div>
+    <div class="info-box"><span>Withdraw</span><strong id="withdraw">$0.00</strong></div>
+    <div class="info-box" style="grid-column:span 2"><span>Date Joined</span><strong id="joined">-</strong></div>
   </div>
-
-  <div id="freezeBox" class="freeze" style="display:none">
-    ⚠ Account Frozen – Multiple Devices Detected
-  </div>
+  <div id="freezeBox" class="freeze" style="display:none">⚠ Account Frozen – Multiple Devices Detected</div>
 </div>
 
+<!-- Spinner while loading -->
 <div id="loading" style="display:flex;justify-content:center;align-items:center;height:60vh;">
   <div class="spinner"></div>
 </div>
 
 <div class="cards-row" id="cardsRow" style="display:none;">
-  <a href="withdraw.html" class="card">💸 Withdraw</a>
-  <a href="rewards.html" class="card">🏆 Rewards</a>
-  <a href="tasks.html" class="card">📅 Tasks</a>
-  <a href="notification.html" class="card">🔔 Notifications</a>
+  <a href="withdraw.html" class="card" id="withdrawCard">💸 Withdraw</a>
+  <a href="rewards.html" class="card" id="rewardCard">🏆 Rewards</a>
+  <a href="tasks.html" class="card" id="taskCard">📅 Weekly Tasks</a>
+  <a href="notification.html" class="card" id="notificationCard">🔔 Notifications</a>
 </div>
 
 <script type="module">
@@ -89,6 +73,7 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ===== Device fingerprint
 function getFingerprint(){
   return {
     ua:navigator.userAgent,
@@ -101,6 +86,7 @@ function getFingerprint(){
   };
 }
 
+// ===== Match score
 function scoreMatch(a,b){
   let s=0;
   if(a.ua===b.ua)s+=25;
@@ -112,51 +98,56 @@ function scoreMatch(a,b){
   return s;
 }
 
+// ===== Prevent back after logout
 window.history.pushState(null,"",location.href);
 window.onpopstate=()=>window.history.pushState(null,"",location.href);
 
+// ===== Auth check
 onAuthStateChanged(auth,async user=>{
   if(!user) return location.replace("index.html");
 
-  const ref=doc(db,"users",user.uid);
-  const snap=await getDoc(ref);
+  const ref = doc(db,"users",user.uid);
+  const snap = await getDoc(ref);
   if(!snap.exists()) return location.replace("index.html");
 
-  const d=snap.data();
-  const fp=getFingerprint();
+  const data = snap.data();
+  const fp = getFingerprint();
 
-  const up={};
-  if(!d.deviceFingerprint) up.deviceFingerprint=fp;
-  if(!d.createdAt) up.createdAt=serverTimestamp();
-  if(!d.totalClicks) up.totalClicks=0;
-  if(Object.keys(up).length) await updateDoc(ref,up);
+  const updates = {};
+  if(!data.deviceFingerprint) updates.deviceFingerprint=fp;
+  if(!data.createdAt) updates.createdAt=serverTimestamp();
+  if(!data.totalClicks) updates.totalClicks=0;
+  if(Object.keys(updates).length) await updateDoc(ref,updates);
 
+  // ===== Freeze check
   let freeze=false;
-  if(d.deviceFingerprint){
-    if(scoreMatch(d.deviceFingerprint,fp)<80){
+  if(data.deviceFingerprint){
+    if(scoreMatch(data.deviceFingerprint,fp)<80){
       freeze=true;
       await updateDoc(ref,{status:"frozen"});
     }
   }
 
+  // ===== Populate UI
   document.getElementById("loading").style.display="none";
   document.getElementById("userInfo").style.display="block";
   document.getElementById("cardsRow").style.display="grid";
 
-  name.textContent=d.name||"-";
-  email.textContent=d.email||"-";
-  earnings.textContent="$"+(d.totalEarnings||0).toFixed(2);
-  withdraw.textContent="$"+(d.withdraw||0).toFixed(2);
-  totalClicks.textContent=d.totalClicks||0;
-  joined.textContent=d.createdAt?.toDate?d.createdAt.toDate().toLocaleString():"-";
+  document.getElementById("name").textContent=data.name||"-";
+  document.getElementById("email").textContent=data.email||"-";
+  document.getElementById("earnings").textContent="$"+(data.totalEarnings||0).toFixed(2);
+  document.getElementById("withdraw").textContent="$"+(data.withdraw||0).toFixed(2);
+  document.getElementById("totalClicks").textContent=data.totalClicks||0;
+  document.getElementById("joined").textContent=data.createdAt?.toDate?data.createdAt.toDate().toLocaleString():"-";
 
-  if(freeze || d.status==="frozen"){
-    freezeBox.style.display="block";
+  if(freeze || data.status==="frozen"){
+    document.getElementById("freezeBox").style.display="block";
     document.querySelectorAll(".card").forEach(c=>c.classList.add("disabled"));
   }
 });
 
-logoutBtn.onclick=async()=>{
+// ===== Logout
+document.getElementById("logoutBtn").onclick=async()=>{
   await signOut(auth);
   location.replace("index.html");
 };
