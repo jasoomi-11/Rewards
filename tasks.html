@@ -94,21 +94,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const spinner = document.getElementById("spinnerOverlay");
-const freezeBox = document.getElementById("freezeBox");
 const container = document.getElementById("tasks");
 
 function showSpinner(val){ spinner.style.display = val ? "flex":"none"; }
 function logout(){ signOut(auth).then(()=>location.href='index.html'); }
-
-function getDeviceHash(){
-  return [
-    navigator.userAgent,
-    navigator.language,
-    navigator.platform,
-    screen.width+"x"+screen.height,
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  ].join("|");
-}
 
 async function fetchTasks(){
   const res = await fetch('tasks.json');
@@ -124,79 +113,82 @@ onAuthStateChanged(auth, async user=>{
   if(!userSnap.exists()){ await signOut(auth); location.href='index.html'; return; }
   const data = userSnap.data();
 
-  const currentHash = getDeviceHash();
-  if(data.status==="flagged" && data.deviceHash && data.deviceHash!==currentHash){
-    freezeBox.style.display="block";
-  }
-
   const today = new Date().toISOString().slice(0,10);
   if(data.tasksDate !== today){
     data.todayClicks = 0;
-    await updateDoc(userRef,{todayClicks:0, tasksDate:today});
+    data.cooldown = 0; // reset cooldown
+    await updateDoc(userRef,{todayClicks:0, tasksDate:today, cooldown:0});
   }
 
   const tasksData = await fetchTasks();
   let todayClicks = data.todayClicks || 0;
+  let cooldownEnd = data.cooldown || 0;
 
   container.innerHTML = "";
 
   async function showNextTask(){
     if(todayClicks >= 20){
-      const alertDiv = document.createElement("div");
-      alertDiv.className = "task alert";
-      alertDiv.innerHTML = "<h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4>";
-      container.innerHTML = "";
-      container.appendChild(alertDiv);
+      container.innerHTML = "<div class='task alert'><h4>🎉 All tasks completed for today! Come back tomorrow for new tasks.</h4></div>";
       return;
     }
+
+    const now = Date.now();
+    let taskAvailable = now >= cooldownEnd;
 
     // Pick random task
     const randomIndex = Math.floor(Math.random()*tasksData.length);
     const task = tasksData[randomIndex];
 
-    container.innerHTML = ""; // show only one task
+    container.innerHTML = "";
     const div = document.createElement("div");
     div.className = "task";
-    div.innerHTML = `<h4>${task.title}</h4><button>Earn</button>`;
+    const btnText = taskAvailable ? "Earn" : "Locked - Wait";
+    div.innerHTML = `<h4>${task.title}</h4><button>${btnText}</button>`;
     container.appendChild(div);
 
     const btn = div.querySelector("button");
-    let clickable = true;
+    btn.disabled = !taskAvailable;
 
     btn.onclick = async ()=>{
-      if(!clickable){
-        alert("⏳ Wait 30 seconds for next task!");
+      if(!taskAvailable){
+        alert("⏳ Task locked! Wait for cooldown.");
         return;
       }
 
-      clickable = false; // prevent multiple clicks
+      // Complete task
       todayClicks += 1;
       let updatedTotalClicks = (data.totalClicks||0)+1;
       let updatedTodayEarnings = parseFloat((todayClicks*0.01).toFixed(2));
       let updatedTotalEarnings = parseFloat((data.totalEarnings||0 + 0.01).toFixed(2));
+
+      // Set cooldown 30 seconds
+      const nextCooldown = Date.now() + 30000;
 
       await updateDoc(userRef,{
         todayClicks,
         totalClicks: updatedTotalClicks,
         todayEarnings: updatedTodayEarnings,
         totalEarnings: updatedTotalEarnings,
-        tasksDate: today
+        cooldown: nextCooldown
       });
 
+      // Update local copy
       data.todayClicks = todayClicks;
       data.totalClicks = updatedTotalClicks;
       data.todayEarnings = updatedTodayEarnings;
       data.totalEarnings = updatedTotalEarnings;
+      data.cooldown = nextCooldown;
 
       btn.textContent = "Completed";
       btn.disabled = true;
       div.classList.add("completed");
 
-      alert("✅ Task completed! Next task will appear after 30 seconds.");
+      alert("✅ Task completed! Next task will unlock in 30 seconds.");
 
+      // Wait 30 seconds then show next task
       setTimeout(()=>{
-        showNextTask(); // show new random task
-      },30000);
+        showNextTask();
+      }, 30000);
     };
   }
 
