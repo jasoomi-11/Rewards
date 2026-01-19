@@ -19,8 +19,7 @@ header button{border:none;padding:8px 16px;border-radius:8px;background:#2563eb;
 .withdraw-form label{display:block;margin:10px 0 5px;}
 .withdraw-form input, .withdraw-form select{width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px;}
 .withdraw-form button{width:100%;padding:12px;background:#22c55e;color:#000;font-weight:bold;border:none;border-radius:8px;cursor:pointer;}
-.freeze, .warning{background:#ff4c4c;text-align:center;padding:14px;border-radius:12px;margin:20px auto;font-weight:bold;display:none;}
-.warning{background:#ffbf00;}
+.freeze{background:#ff4c4c;text-align:center;padding:14px;border-radius:12px;margin:20px auto;font-weight:bold;display:none;}
 .spinner-overlay {position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;display:none;}
 .spinner {border:6px solid rgba(255,255,255,0.3);border-top:6px solid #fff;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;}
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
@@ -36,6 +35,8 @@ header button{border:none;padding:8px 16px;border-radius:8px;background:#2563eb;
   </div>
 </header>
 
+<div id="spinnerOverlay" class="spinner-overlay"><div class="spinner"></div></div>
+
 <div class="user-info" id="userInfo" style="display:none;">
   <h3>User Info</h3>
   <div class="info-box"><span>Total Clicks</span><strong id="totalClicks">0</strong></div>
@@ -43,7 +44,6 @@ header button{border:none;padding:8px 16px;border-radius:8px;background:#2563eb;
 </div>
 
 <div class="freeze" id="freezeBox">⚠ Account Frozen – Multiple Accounts Detected on This Device</div>
-<div class="warning" id="warnBox">⚠ Warning: Another account detected on this device!</div>
 
 <div class="withdraw-form" id="withdrawForm" style="display:none;">
   <h3>Withdraw Request</h3>
@@ -66,8 +66,6 @@ header button{border:none;padding:8px 16px;border-radius:8px;background:#2563eb;
   <button id="submitBtn">Submit Withdraw Request</button>
 </div>
 
-<div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -86,7 +84,6 @@ const spinner = document.getElementById("spinnerOverlay");
 const userInfoDiv = document.getElementById("userInfo");
 const withdrawFormDiv = document.getElementById("withdrawForm");
 const freezeBox = document.getElementById("freezeBox");
-const warnBox = document.getElementById("warnBox");
 
 function showSpinner(v){ spinner.style.display = v ? "flex" : "none"; }
 
@@ -120,29 +117,22 @@ onAuthStateChanged(auth, async user => {
   const userRef = doc(db,"users",user.uid);
   const snap = await getDoc(userRef);
   if(!snap.exists()) return location.href="index.html";
-
   const data = snap.data();
   const fp = getFingerprint();
 
-  // Init
   const updates = {};
   if(!data.deviceFingerprint) updates.deviceFingerprint = fp;
   if(!data.totalClicks) updates.totalClicks = 0;
   if(!data.totalEarnings) updates.totalEarnings = 0;
   if(Object.keys(updates).length) await updateDoc(userRef, updates);
 
-  // ✅ Check for multiple accounts on same device
-  let freeze=false, flag=false;
+  // Check if same device is used by other accounts
+  let freeze=false;
   const usersSnap = await getDocs(collection(db,"users"));
   usersSnap.forEach(u=>{
-    if(u.id !== user.uid){
-      const other = u.data();
-      if(other.deviceFingerprint){
-        const score = calculateScore(fp, other.deviceFingerprint);
-        const mismatch = 100 - score;
-        if(mismatch >= 80) freeze=true; // multiple accounts ≥80% → freeze
-        else if(mismatch >=60) flag=true; // warning
-      }
+    if(u.id !== user.uid && u.data().deviceFingerprint){
+      const score = calculateScore(fp, u.data().deviceFingerprint);
+      if(score >= 80) freeze=true;
     }
   });
 
@@ -151,14 +141,13 @@ onAuthStateChanged(auth, async user => {
   }
 
   showSpinner(false);
+
   if(freeze || data.status==="frozen"){
     freezeBox.style.display="block";
     withdrawFormDiv.style.display="none";
   } else {
     userInfoDiv.style.display="block";
     withdrawFormDiv.style.display="block";
-    if(flag) warnBox.style.display="block";
-
     document.getElementById("totalClicks").textContent = data.totalClicks || 0;
     document.getElementById("totalEarnings").textContent = "$" + (data.totalEarnings || 0).toFixed(2);
   }
