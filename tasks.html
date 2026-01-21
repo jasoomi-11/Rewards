@@ -75,7 +75,6 @@ header button{
 </style>
 </head>
 <body>
-
 <header>
   <h2>Redirect Tasks</h2>
   <div>
@@ -85,14 +84,13 @@ header button{
 </header>
 
 <div class="tasks" id="tasks"></div>
-
 <div class="note">
 ⚠️ Click will be enabled after countdown. Already clicked tasks are disabled. Earnings and clicks are updated on the real redirect page.
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 /* 🔥 FIREBASE CONFIG */
@@ -115,18 +113,18 @@ let currentIndex = 0;
 const today = () => new Date().toISOString().slice(0,10);
 
 /* 🔗 TOKEN GENERATOR */
-function generateToken(){
-  return crypto.randomUUID() + "-" + Date.now();
+function generateToken(){  
+  return crypto.randomUUID() + "-" + Date.now();  
 }
 
 /* FETCH TASKS JSON */
-async function loadTasks(){
-  const res = await fetch(TASKS_JSON);
-  return await res.json();
+async function loadTasks(){  
+  const res = await fetch(TASKS_JSON);  
+  return await res.json();  
 }
 
 /* CREATE TASK CARD */
-function createCard(task, index, userData){
+function createCard(task, index, userData, userRef){
   const card = document.createElement("div");
   card.className = "card";
 
@@ -139,7 +137,6 @@ function createCard(task, index, userData){
   const btn = document.createElement("button");
   btn.textContent = "Locked";
 
-  // Disable if already clicked
   const alreadyClicked = userData.usedLinks?.includes(task.link);
   btn.disabled = alreadyClicked;
   btn.textContent = alreadyClicked ? "✅ Completed" : "Locked";
@@ -150,7 +147,7 @@ function createCard(task, index, userData){
 
   if(!alreadyClicked){
     if(index === currentIndex){
-      startCountdown(timer, btn, task);
+      startCountdown(timer, btn, task, userRef);
     } else {
       timer.textContent = "🔒 Complete previous task first";
     }
@@ -162,7 +159,7 @@ function createCard(task, index, userData){
 }
 
 /* START COUNTDOWN */
-function startCountdown(timer, btn, task){
+function startCountdown(timer, btn, task, userRef){
   let timeLeft = COUNTDOWN_SECONDS;
   timer.textContent = `⏳ Available in ${timeLeft}s`;
   btn.disabled = true;
@@ -178,17 +175,27 @@ function startCountdown(timer, btn, task){
     }
   },1000);
 
-  btn.onclick = ()=>{
+  btn.onclick = async () => {
     btn.disabled = true;
     timer.textContent = "Redirecting...";
-    // Only redirect, no Firestore updates here
+    const token = generateToken();
+
+    // Firestore update: clicks, token, used link
+    await updateDoc(userRef,{
+      totalClicks: increment(1),
+      todayClicks: increment(1),
+      usedTokens: arrayUnion(token),
+      usedLinks: arrayUnion(task.link)
+    });
+
+    // Redirect
     window.location.href = task.link;
   };
 }
 
-/* MAIN LOGIC - AUTH BASED UID */
+/* MAIN LOGIC */
 onAuthStateChanged(auth, async user => {
-  if(!user) return location.href="index.html"; // redirect if not logged in
+  if(!user) return location.href="index.html";
   const uid = user.uid;
 
   const tasks = await loadTasks();
@@ -196,7 +203,20 @@ onAuthStateChanged(auth, async user => {
 
   const userRef = doc(db,"users",uid);
   const snap = await getDoc(userRef);
-  let userData = snap.exists() ? snap.data() : { usedLinks: [] };
+  let userData = snap.exists() ? snap.data() : { usedLinks: [], todayClicks:0, tasksDate:"" };
+
+  // Daily reset
+  if(userData.tasksDate !== today()){
+    await updateDoc(userRef,{
+      tasksDate: today(),
+      todayClicks: 0,
+      usedTokens: [],
+      usedLinks: []
+    });
+    userData.todayClicks = 0;
+    userData.usedTokens = [];
+    userData.usedLinks = [];
+  }
 
   currentIndex = userData.usedLinks?.length || 0;
 
@@ -206,8 +226,7 @@ onAuthStateChanged(auth, async user => {
   }
 
   tasks.slice(0,DAILY_LIMIT).forEach((task,index)=>{
-    const card = createCard(task,index,userData);
-    card.setAttribute("data-link", task.link);
+    const card = createCard(task,index,userData,userRef);
     container.appendChild(card);
   });
 });
