@@ -23,8 +23,8 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 .card:hover{transform:translateY(-6px);box-shadow:0 25px 45px rgba(0,0,0,.5);}
 .card:active{transform:scale(.96);}
 .card.disabled{opacity:.4;pointer-events:none;transform:none;box-shadow:none;}
-.spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:20px;height:20px;animation:spin 1s linear infinite;position:absolute;right:15px;top:50%;transform:translateY(-50%);}
-@keyframes spin{0%{transform:translateY(-50%) rotate(0deg);}100%{transform:translateY(-50%) rotate(360deg);}}
+.spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;position:absolute;right:50%;top:50%;transform:translate(50%,-50%);}
+@keyframes spin{0%{transform:translate(50%,-50%) rotate(0deg);}100%{transform:translate(50%,-50%) rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -44,13 +44,11 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
     <div class="info-box"><span>Withdraw</span><strong id="withdraw">$0.00</strong></div>
     <div class="info-box" style="grid-column:span 2"><span>Date Joined</span><strong id="joined">-</strong></div>
   </div>
-  <div id="freezeBox" class="freeze" style="display:none">⚠ Account Frozen – Multiple Accounts on Same Device Detected</div>
+  <div id="freezeBox" class="freeze" style="display:none">⚠ Your account has been frozen. Contact admin.</div>
 </div>
 
-<!-- Spinner while loading -->
-<div id="loading" style="display:flex;justify-content:center;align-items:center;height:60vh;">
-  <div class="spinner"></div>
-</div>
+<!-- Loading Spinner -->
+<div id="loading"><div class="spinner"></div></div>
 
 <div class="cards-row" id="cardsRow" style="display:none;">
   <a href="withdraw.html" class="card" id="withdrawCard">💸 Withdraw</a>
@@ -62,7 +60,7 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
@@ -73,72 +71,25 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ===== Device fingerprint
-function getFingerprint() {
-  return {
-    ua: navigator.userAgent,
-    platform: navigator.platform,
-    lang: navigator.language,
-    screen: screen.width + "x" + screen.height,
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    cpu: navigator.hardwareConcurrency || "na",
-    ram: navigator.deviceMemory || "na"
-  };
-}
-
-// ===== Match score
-function scoreMatch(a, b) {
-  let s = 0;
-  if(a.ua === b.ua) s += 25;
-  if(a.platform === b.platform) s += 15;
-  if(a.screen === b.screen) s += 15;
-  if(a.tz === b.tz) s += 15;
-  if(a.cpu === b.cpu && a.ram === b.ram) s += 15;
-  if(a.lang === b.lang) s += 15;
-  return s;
-}
-
 // ===== Prevent back after logout
 window.history.pushState(null,"",location.href);
 window.onpopstate = () => window.history.pushState(null,"",location.href);
 
-// ===== Auth check
 onAuthStateChanged(auth, async user => {
   if(!user) return location.replace("index.html");
 
   const ref = doc(db,"users",user.uid);
   const snap = await getDoc(ref);
+
   if(!snap.exists()) return location.replace("index.html");
 
   const data = snap.data();
 
-  // ===== Redirect if account not approved
-  if(data.account !== "approved") return location.replace("approve.html");
+  // ===== Check account status
+  if(data.account === "pending") return location.replace("approve.html");
+  if(data.account !== "approved") return location.replace("index.html");
 
-  const fp = getFingerprint();
-  const updates = {};
-  if(!data.deviceFingerprint) updates.deviceFingerprint = fp;
-  if(!data.createdAt) updates.createdAt = serverTimestamp();
-  if(!data.totalClicks) updates.totalClicks = 0;
-  if(Object.keys(updates).length) await updateDoc(ref, updates);
-
-  // ===== Multiple account detection
-  let freeze = false;
-  const usersSnap = await getDocs(collection(db,"users"));
-  for(const docSnap of usersSnap.docs){
-    if(docSnap.id === user.uid) continue;
-    const u = docSnap.data();
-    if(u.deviceFingerprint){
-      const score = scoreMatch(u.deviceFingerprint, fp);
-      if(score >= 80){
-        freeze = true;
-        break;
-      }
-    }
-  }
-  if(freeze) await updateDoc(ref, {status:"frozen"});
-
-  // ===== Populate UI
+  // ===== Show user data
   document.getElementById("loading").style.display = "none";
   document.getElementById("userInfo").style.display = "block";
   document.getElementById("cardsRow").style.display = "grid";
@@ -150,7 +101,7 @@ onAuthStateChanged(auth, async user => {
   document.getElementById("totalClicks").textContent = data.totalClicks || 0;
   document.getElementById("joined").textContent = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-";
 
-  if(freeze || data.status === "frozen"){
+  if(data.status === "frozen"){
     document.getElementById("freezeBox").style.display = "block";
     document.querySelectorAll(".card").forEach(c => c.classList.add("disabled"));
   }

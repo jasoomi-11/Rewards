@@ -45,6 +45,11 @@ function getDeviceHash() {
     memory    
   ].join("|");    
 }    
+
+/* 🔑 UNIQUE TOKEN GENERATOR (FOR REDIRECT / BLOG VALIDATION) */
+function generateToken(){
+  return crypto.randomUUID() + "-" + Date.now();
+}
     
 document.addEventListener("DOMContentLoaded", () => {    
   const form = document.getElementById("signupForm");    
@@ -63,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("email").value.trim();    
     const password = document.getElementById("password").value.trim();    
     const deviceHash = getDeviceHash();    
+    const signupToken = generateToken();    
     
     if (!name || !email || !password) {    
       errorDiv.textContent = "All fields are required!";    
@@ -83,22 +89,37 @@ document.addEventListener("DOMContentLoaded", () => {
         email,    
         password,    
         deviceHash,    
+
+        /* 🔐 ACCOUNT CONTROL */
         status: "active",    
-    account: "pending", 
+        account: "pending",    
+        frozen: false,    
+
+        /* 💰 EARNINGS */
         totalEarnings: 0,    
         todayEarnings: 0,    
         totalClicks: 0,    
         todayClicks: 0,    
         weeklyProgress: 0,    
         withdraw: 0,    
-          
-    
+
+        /* 📅 DAILY / WEEKLY */
         tasksToday: 0,    
         tasksLastDay: 0,    
         tasksDate: new Date().toISOString().split("T")[0],    
-    
+
+        /* 🔗 REDIRECT / TOKEN SYSTEM */
+        activeToken: signupToken,
+        usedTokens: [],
+        lastClickAt: null,
+        cooldownUntil: 0,
+
+        /* 🛡️ SECURITY */
+        suspiciousClicks: 0,
+        lastIP: null,
+
         createdAt: serverTimestamp(),    
-    
+
         weeklyTasks: {    
           day1: { clicks: 0, lastClick: null },    
           day2: { clicks: 0, lastClick: null },    
@@ -106,9 +127,9 @@ document.addEventListener("DOMContentLoaded", () => {
           day4: { clicks: 0, lastClick: null },    
           day5: { clicks: 0, lastClick: null },    
           day6: { clicks: 0, lastClick: null },    
-          day7: { clicks: 0, lastClick: null },    
+          day7: { clicks: 0, lastClick: null }    
         },    
-    
+
         rewards: {},    
         withdrawals: {}    
       });    
@@ -135,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }    
   });    
 });    
-</script>  
+</script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body { background: linear-gradient(180deg,#0b1d61,#0a184f); min-height:100vh; display:flex; justify-content:center; align-items:center; color:#fff; }

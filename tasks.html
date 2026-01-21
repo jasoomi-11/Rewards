@@ -1,233 +1,200 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Daily Shortlink Tasks</title>  
-<style>  
-body{  
-  margin:0;  
-  font-family:Segoe UI,sans-serif;  
-  background:linear-gradient(180deg,#0b1d61,#08123a);  
-  color:#fff;  
-}  
-header{  
-  display:flex;  
-  justify-content:space-between;  
-  align-items:center;  
-  padding:16px 20px;  
-  background:#0a184f;  
-}  
-header h2{color:#00aaff;}  
-header button{  
-  border:none;  
-  padding:8px 16px;  
-  border-radius:8px;  
-  background:#2563eb;  
-  color:#fff;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-.tasks{  
-  max-width:600px;  
-  margin:25px auto;  
-  padding:0 15px;  
-  display:flex;  
-  flex-direction:column;  
-  gap:15px;  
-}  
-.task{  
-  background:#1e40af;  
-  padding:16px;  
-  border-radius:10px;  
-  text-align:center;  
-}  
-.task h4{margin:0 0 8px;}  
-.task button{  
-  width:100%;  
-  padding:10px;  
-  border:none;  
-  border-radius:8px;  
-  background:#22c55e;  
-  color:#000;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-.task.completed{opacity:0.6; pointer-events:none;}  
-.task.alert{  
-  background:#2563eb;  
-  pointer-events:none;  
-}  
-.freeze{   
-  background:#ff4c4c;   
-  text-align:center;   
-  padding:14px;   
-  border-radius:12px;   
-  margin:20px auto;   
-  font-weight:bold;   
-  box-shadow:0 10px 25px rgba(0,0,0,.4);   
-  display:none;  
-}  
-.spinner-overlay {   
-  position:fixed; top:0; left:0; right:0; bottom:0;   
-  background:rgba(0,0,0,0.5); display:flex;   
-  align-items:center; justify-content:center; z-index:1000;   
-}  
-.spinner {   
-  border:6px solid rgba(255,255,255,0.3);   
-  border-top:6px solid #fff;   
-  border-radius:50%; width:50px; height:50px;   
-  animation:spin 1s linear infinite;   
-}  
-@keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}  
-</style>  
-</head>  
-<body>  <header>  
-  <h2>Daily Shortlink Tasks</h2>  
-  <div>  
-    <button onclick="location.href='dashboard.html'">Dashboard</button>  
-    <button onclick="location.href='index.html'">Logout</button>  
-  </div>  
-</header>  <div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>  
-<div class="freeze" id="freezeBox">⚠ Account Frozen – Multiple Devices Detected</div>  
-<div class="tasks" id="tasks"></div> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Tasks</title>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,sans-serif;
+  background:linear-gradient(180deg,#0b1d61,#08123a);
+  color:#fff;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px 20px;
+  background:#0a184f;
+}
+header h2{color:#00aaff;}
+header button{
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  background:#2563eb;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+.tasks{
+  max-width:900px;
+  margin:30px auto;
+  padding:0 15px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:15px;
+}
+.card{
+  background:#1e40af;
+  padding:16px;
+  border-radius:12px;
+  text-align:center;
+  box-shadow:0 8px 20px rgba(0,0,0,.4);
+}
+.card h4{margin:0 0 10px;}
+.timer{
+  font-size:14px;
+  margin-bottom:10px;
+  color:#c7d2fe;
+}
+.card button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+.card button:disabled{
+  background:#94a3b8;
+  cursor:not-allowed;
+}
+.note{
+  max-width:900px;
+  margin:20px auto;
+  padding:15px;
+  background:#0f172a;
+  border-radius:12px;
+  font-size:14px;
+  color:#cbd5f5;
+}
+</style>
+</head>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
-  authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903"
-};
+<body>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+<header>
+  <h2>Redirect Tasks</h2>
+  <div>
+    <button onclick="location.href='dashboard.html'">Back</button>
+    <button onclick="location.href='index.html'">Logout</button>
+  </div>
+</header>
 
-const spinner = document.getElementById("spinnerOverlay");
-const container = document.getElementById("tasks");
+<div class="tasks" id="tasks"></div>
 
-function showSpinner(v){ spinner.style.display = v ? "flex" : "none"; }
+<div class="note">
+⚠️ Note: Click will be enabled after countdown.  
+Earnings & clicks will be added only after verification on blog page.
+</div>
 
-async function fetchTasks(){
-  const res = await fetch("tasks.json");
+<script>
+const TASKS_JSON = "tasks.json";
+const COUNTDOWN_SECONDS = 5;
+const BLOG_VERIFY_PAGE = "blog.html";
+
+let currentIndex = 0;
+
+function generateToken(){
+  return crypto.randomUUID() + "-" + Date.now();
+}
+
+async function loadTasks(){
+  const res = await fetch(TASKS_JSON);
   return await res.json();
 }
 
-onAuthStateChanged(auth, async user => {
-  if(!user){ location.href="index.html"; return; }
-  showSpinner(true);
+function createCard(task, index){
+  const card = document.createElement("div");
+  card.className = "card";
 
-  const userRef = doc(db,"users",user.uid);
-  const snap = await getDoc(userRef);
-  if(!snap.exists()){ location.href="index.html"; return; }
+  const title = document.createElement("h4");
+  title.textContent = task.title;
 
-  const data = snap.data();
-  const today = new Date().toISOString().slice(0,10);
+  const timer = document.createElement("div");
+  timer.className = "timer";
 
-  /* Reset daily tasks */
-  if(data.tasksDate !== today){
-    await updateDoc(userRef,{
-      tasksDate: today,
-      todayClicks: 0,
-      todayEarnings: 0,
-      cooldown: 0,
-      usedTasks: []
-    });
-    data.todayClicks = 0;
-    data.usedTasks = [];
-    data.cooldown = 0;
+  const btn = document.createElement("button");
+  btn.textContent = "Locked";
+  btn.disabled = true;
+
+  card.appendChild(title);
+  card.appendChild(timer);
+  card.appendChild(btn);
+
+  // Only first card gets countdown
+  if(index === currentIndex){
+    startCountdown(timer, btn, task, index);
+  }else{
+    timer.textContent = "🔒 Complete previous task first";
   }
 
-  const tasks = await fetchTasks();
-  let usedTasks = data.usedTasks || [];
-  let todayClicks = data.todayClicks || 0;
+  return card;
+}
 
-  function getUniqueTask(){
-    const remaining = tasks.filter(t => !usedTasks.includes(t.id));
-    if(remaining.length === 0) return null;
-    return remaining[Math.floor(Math.random() * remaining.length)];
+function startCountdown(timer, btn, task, index){
+  let timeLeft = COUNTDOWN_SECONDS;
+  timer.textContent = `⏳ Available in ${timeLeft}s`;
+
+  const interval = setInterval(()=>{
+    timeLeft--;
+    timer.textContent = `⏳ Available in ${timeLeft}s`;
+    if(timeLeft <= 0){
+      clearInterval(interval);
+      timer.textContent = "✅ Click to continue";
+      btn.textContent = "Go to Link";
+      btn.disabled = false;
+    }
+  },1000);
+
+  btn.onclick = ()=>{
+    const token = generateToken();
+
+    const url = new URL(BLOG_VERIFY_PAGE, window.location.origin);
+    url.searchParams.set("token", token);
+    url.searchParams.set("redirect", task.link);
+
+    window.open(url.toString(), "_blank");
+
+    btn.disabled = true;
+    btn.textContent = "Opened";
+
+    // Activate next card
+    currentIndex++;
+    activateNextCard();
+  };
+}
+
+function activateNextCard(){
+  const cards = document.querySelectorAll(".card");
+  if(currentIndex < cards.length){
+    const card = cards[currentIndex];
+    const timer = card.querySelector(".timer");
+    const btn = card.querySelector("button");
+    const taskLink = card.getAttribute("data-link");
+
+    startCountdown(timer, btn, {
+      link: taskLink
+    }, currentIndex);
   }
+}
 
-  async function render(){
-    container.innerHTML = "";
+(async ()=>{
+  const tasks = await loadTasks();
+  const container = document.getElementById("tasks");
 
-    if(todayClicks >= 20){
-      container.innerHTML =
-        "<div class='task alert'><h4>🎉 All tasks completed today. Come tomorrow!</h4></div>";
-      return;
-    }
-
-    const now = Date.now();
-    if(data.cooldown && now < data.cooldown){
-      const seconds = Math.ceil((data.cooldown - now) / 1000);
-      container.innerHTML =
-        `<div class="task alert"><h4>⏳ Please wait ${seconds}s for next task</h4></div>`;
-      setTimeout(render, 1000);
-      return;
-    }
-
-    const task = getUniqueTask();
-    if(!task){
-      container.innerHTML =
-        "<div class='task alert'><h4>No more tasks available</h4></div>";
-      return;
-    }
-
-    const div = document.createElement("div");
-    div.className = "task";
-    div.innerHTML = `
-      <h4>${task.title}</h4>
-      <button>Go to Link</button>
-    `;
-    container.appendChild(div);
-
-    const btn = div.querySelector("button");
-
-    btn.onclick = async () => {
-      // Disable button & mark completed
-      btn.disabled = true;
-      div.classList.add("completed");
-
-      // Update clicks & earnings
-      todayClicks += 1;
-      usedTasks.push(task.id);
-
-      const cooldown = Date.now() + 30000;
-      const totalClicks = (data.totalClicks || 0) + 1;
-      const totalEarnings = parseFloat(((data.totalEarnings || 0) + 0.01).toFixed(2));
-      const todayEarnings = parseFloat((todayClicks * 0.01).toFixed(2));
-
-      await updateDoc(userRef,{
-        todayClicks,
-        totalClicks,
-        todayEarnings,
-        totalEarnings,
-        cooldown,
-        usedTasks
-      });
-
-      data.todayClicks = todayClicks;
-      data.totalClicks = totalClicks;
-      data.totalEarnings = totalEarnings;
-      data.todayEarnings = todayEarnings;
-      data.cooldown = cooldown;
-      data.usedTasks = usedTasks;
-
-      // Redirect to the actual shortlink
-      window.open(task.link, "_blank");
-
-      render();
-    };
-  }
-
-  render();
-  showSpinner(false);
-});
+  tasks.slice(0,20).forEach((task, index)=>{
+    const card = createCard(task, index);
+    card.setAttribute("data-link", task.link);
+    container.appendChild(card);
+  });
+})();
 </script>
 
-
-</body>  
-</html>  
+</body>
+</html>
