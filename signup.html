@@ -4,137 +4,138 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign Up</title>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
-  authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903",
-  storageBucket: "rewards-6b903.appspot.com",
-  messagingSenderId: "970714488307",
-  appId: "1:970714488307:web:c464136ef40d65607e8686",
-  measurementId: "G-STK1EZ0XBJ"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-/* 🔐 STRONG REAL DEVICE HASH */
-function getDeviceHash() {
-  const ua = navigator.userAgent;
-  const lang = navigator.language;
-  const platform = navigator.platform;
-  const screenRes = screen.width + "x" + screen.height;
-  const colorDepth = screen.colorDepth;
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const hardware = navigator.hardwareConcurrency || "na";
-  const memory = navigator.deviceMemory || "na";
-
-  return [
-    ua,
-    lang,
-    platform,
-    screenRes,
-    colorDepth,
-    timezone,
-    hardware,
-    memory
-  ].join("|");
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("signupForm");
-  const errorDiv = document.getElementById("error");
-  const spinner = document.getElementById("spinner");
-  const btnText = document.getElementById("btnText");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    errorDiv.textContent = "";
-    spinner.style.display = "inline-block";
-    btnText.textContent = "Creating...";
-
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const deviceHash = getDeviceHash();
-
-    if (!name || !email || !password) {
-      errorDiv.textContent = "All fields are required!";
-      spinner.style.display = "none";
-      btnText.textContent = "Create Account";
-      return;
-    }
-
-    try {
-      /* 1️⃣ AUTH CREATE */
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = userCredential.user.uid;
-
-      /* 2️⃣ FIRESTORE SAVE */
-      await setDoc(doc(db, "users", uid), {
-        uid,
-        name,
-        email,
-        password,
-        deviceHash,
-        status: "active",
-
-        totalEarnings: 0,
-        todayEarnings: 0,
-        totalClicks: 0,
-        todayClicks: 0,
-        weeklyProgress: 0,
-        withdraw: 0,
-
-        tasksToday: 0,
-        tasksLastDay: 0,
-        tasksDate: new Date().toISOString().split("T")[0],
-
-        createdAt: serverTimestamp(),
-
-        weeklyTasks: {
-          day1: { clicks: 0, lastClick: null },
-          day2: { clicks: 0, lastClick: null },
-          day3: { clicks: 0, lastClick: null },
-          day4: { clicks: 0, lastClick: null },
-          day5: { clicks: 0, lastClick: null },
-          day6: { clicks: 0, lastClick: null },
-          day7: { clicks: 0, lastClick: null },
-        },
-
-        rewards: {},
-        withdrawals: {}
-      });
-
-      /* 3️⃣ REDIRECT */
-      window.location.href = "dashboard.html";
-
-    } catch (err) {
-      console.error(err);
-
-      if (err.code === "auth/email-already-in-use") {
-        errorDiv.textContent = "Email already in use!";
-      } else if (err.code === "auth/invalid-email") {
-        errorDiv.textContent = "Invalid email!";
-      } else if (err.code === "auth/weak-password") {
-        errorDiv.textContent = "Password must be at least 6 characters!";
-      } else {
-        errorDiv.textContent = "Something went wrong. Try again!";
-      }
-
-    } finally {
-      spinner.style.display = "none";
-      btnText.textContent = "Create Account";
-    }
-  });
-});
-</script>
+<script type="module">    
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";    
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";    
+import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";    
+    
+const firebaseConfig = {    
+  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",    
+  authDomain: "rewards-6b903.firebaseapp.com",    
+  projectId: "rewards-6b903",    
+  storageBucket: "rewards-6b903.appspot.com",    
+  messagingSenderId: "970714488307",    
+  appId: "1:970714488307:web:c464136ef40d65607e8686",    
+  measurementId: "G-STK1EZ0XBJ"    
+};    
+    
+const app = initializeApp(firebaseConfig);    
+const auth = getAuth(app);    
+const db = getFirestore(app);    
+    
+/* 🔐 STRONG REAL DEVICE HASH */    
+function getDeviceHash() {    
+  const ua = navigator.userAgent;    
+  const lang = navigator.language;    
+  const platform = navigator.platform;    
+  const screenRes = screen.width + "x" + screen.height;    
+  const colorDepth = screen.colorDepth;    
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;    
+  const hardware = navigator.hardwareConcurrency || "na";    
+  const memory = navigator.deviceMemory || "na";    
+    
+  return [    
+    ua,    
+    lang,    
+    platform,    
+    screenRes,    
+    colorDepth,    
+    timezone,    
+    hardware,    
+    memory    
+  ].join("|");    
+}    
+    
+document.addEventListener("DOMContentLoaded", () => {    
+  const form = document.getElementById("signupForm");    
+  const errorDiv = document.getElementById("error");    
+  const spinner = document.getElementById("spinner");    
+  const btnText = document.getElementById("btnText");    
+    
+  form.addEventListener("submit", async (e) => {    
+    e.preventDefault();    
+    
+    errorDiv.textContent = "";    
+    spinner.style.display = "inline-block";    
+    btnText.textContent = "Creating...";    
+    
+    const name = document.getElementById("name").value.trim();    
+    const email = document.getElementById("email").value.trim();    
+    const password = document.getElementById("password").value.trim();    
+    const deviceHash = getDeviceHash();    
+    
+    if (!name || !email || !password) {    
+      errorDiv.textContent = "All fields are required!";    
+      spinner.style.display = "none";    
+      btnText.textContent = "Create Account";    
+      return;    
+    }    
+    
+    try {    
+      /* 1️⃣ AUTH CREATE */    
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);    
+      const uid = userCredential.user.uid;    
+    
+      /* 2️⃣ FIRESTORE SAVE */    
+      await setDoc(doc(db, "users", uid), {    
+        uid,    
+        name,    
+        email,    
+        password,    
+        deviceHash,    
+        status: "active",    
+    account: "pending", 
+        totalEarnings: 0,    
+        todayEarnings: 0,    
+        totalClicks: 0,    
+        todayClicks: 0,    
+        weeklyProgress: 0,    
+        withdraw: 0,    
+          
+    
+        tasksToday: 0,    
+        tasksLastDay: 0,    
+        tasksDate: new Date().toISOString().split("T")[0],    
+    
+        createdAt: serverTimestamp(),    
+    
+        weeklyTasks: {    
+          day1: { clicks: 0, lastClick: null },    
+          day2: { clicks: 0, lastClick: null },    
+          day3: { clicks: 0, lastClick: null },    
+          day4: { clicks: 0, lastClick: null },    
+          day5: { clicks: 0, lastClick: null },    
+          day6: { clicks: 0, lastClick: null },    
+          day7: { clicks: 0, lastClick: null },    
+        },    
+    
+        rewards: {},    
+        withdrawals: {}    
+      });    
+    
+      /* 3️⃣ REDIRECT */    
+      window.location.href = "approve.html";    
+    
+    } catch (err) {    
+      console.error(err);    
+    
+      if (err.code === "auth/email-already-in-use") {    
+        errorDiv.textContent = "Email already in use!";    
+      } else if (err.code === "auth/invalid-email") {    
+        errorDiv.textContent = "Invalid email!";    
+      } else if (err.code === "auth/weak-password") {    
+        errorDiv.textContent = "Password must be at least 6 characters!";    
+      } else {    
+        errorDiv.textContent = "Something went wrong. Try again!";    
+      }    
+    
+    } finally {    
+      spinner.style.display = "none";    
+      btnText.textContent = "Create Account";    
+    }    
+  });    
+});    
+</script>  
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body { background: linear-gradient(180deg,#0b1d61,#0a184f); min-height:100vh; display:flex; justify-content:center; align-items:center; color:#fff; }
@@ -161,7 +162,7 @@ a { display:block; text-align:center; margin-top:10px; color:#9ec1ff; text-decor
 <span id="btnText">Create Account</span>
 <div class="spinner" id="spinner"></div>
 </button>
-<a href="login.html">Already have an account? Login</a>
+<a href="index.html">Already have an account? Login</a>
 </form>
 </body>
 </html>
