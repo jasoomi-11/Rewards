@@ -8,21 +8,21 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";    
 import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";    
 import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";    
-    
+
+// ✅ Updated Firebase config
 const firebaseConfig = {    
-  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",    
-  authDomain: "rewards-6b903.firebaseapp.com",    
-  projectId: "rewards-6b903",    
-  storageBucket: "rewards-6b903.appspot.com",    
-  messagingSenderId: "970714488307",    
-  appId: "1:970714488307:web:c464136ef40d65607e8686",    
-  measurementId: "G-STK1EZ0XBJ"    
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",    
+  authDomain: "rewards-b8f54.firebaseapp.com",    
+  projectId: "rewards-b8f54",    
+  storageBucket: "rewards-b8f54.appspot.com",    
+  messagingSenderId: "588528777945",    
+  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"    
 };    
-    
+
 const app = initializeApp(firebaseConfig);    
 const auth = getAuth(app);    
 const db = getFirestore(app);    
-    
+
 /* 🔐 STRONG REAL DEVICE HASH */    
 function getDeviceHash() {    
   const ua = navigator.userAgent;    
@@ -33,7 +33,7 @@ function getDeviceHash() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;    
   const hardware = navigator.hardwareConcurrency || "na";    
   const memory = navigator.deviceMemory || "na";    
-    
+
   return [    
     ua,    
     lang,    
@@ -49,39 +49,39 @@ function getDeviceHash() {
 /* 🔑 UNIQUE TOKEN GENERATOR (FOR REDIRECT / BLOG VALIDATION) */
 function generateToken(){
   return crypto.randomUUID() + "-" + Date.now();
-}
-    
+}    
+
 document.addEventListener("DOMContentLoaded", () => {    
   const form = document.getElementById("signupForm");    
   const errorDiv = document.getElementById("error");    
   const spinner = document.getElementById("spinner");    
   const btnText = document.getElementById("btnText");    
-    
+
   form.addEventListener("submit", async (e) => {    
     e.preventDefault();    
-    
+
     errorDiv.textContent = "";    
     spinner.style.display = "inline-block";    
     btnText.textContent = "Creating...";    
-    
+
     const name = document.getElementById("name").value.trim();    
     const email = document.getElementById("email").value.trim();    
     const password = document.getElementById("password").value.trim();    
     const deviceHash = getDeviceHash();    
     const signupToken = generateToken();    
-    
+
     if (!name || !email || !password) {    
       errorDiv.textContent = "All fields are required!";    
       spinner.style.display = "none";    
       btnText.textContent = "Create Account";    
       return;    
     }    
-    
+
     try {    
       /* 1️⃣ AUTH CREATE */    
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);    
       const uid = userCredential.user.uid;    
-    
+
       /* 2️⃣ FIRESTORE SAVE */    
       await setDoc(doc(db, "users", uid), {    
         uid,    
@@ -133,13 +133,13 @@ document.addEventListener("DOMContentLoaded", () => {
         rewards: {},    
         withdrawals: {}    
       });    
-    
+
       /* 3️⃣ REDIRECT */    
       window.location.href = "approve.html";    
-    
+
     } catch (err) {    
       console.error(err);    
-    
+
       if (err.code === "auth/email-already-in-use") {    
         errorDiv.textContent = "Email already in use!";    
       } else if (err.code === "auth/invalid-email") {    
@@ -149,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {    
         errorDiv.textContent = "Something went wrong. Try again!";    
       }    
-    
+
     } finally {    
       spinner.style.display = "none";    
       btnText.textContent = "Create Account";    

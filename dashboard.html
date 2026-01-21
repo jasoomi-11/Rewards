@@ -62,10 +62,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/fireba
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+// ✅ Updated Firebase config
 const app = initializeApp({
-  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
-  authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903",
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54",
+  storageBucket: "rewards-b8f54.appspot.com",
+  messagingSenderId: "588528777945",
+  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"
 });
 
 const auth = getAuth(app);

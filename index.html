@@ -4,19 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+// 🔥 Firebase Config
 const firebaseConfig = {
-  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
-  authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903",
-  storageBucket: "rewards-6b903.appspot.com",
-  messagingSenderId: "970714488307",
-  appId: "1:970714488307:web:c464136ef40d65607e8686",
-  measurementId: "G-STK1EZ0XBJ"
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54",
+  storageBucket: "rewards-b8f54.firebasestorage.app",
+  messagingSenderId: "588528777945",
+  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -43,39 +44,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
+      // ✅ Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-      // ===== Check Firestore for account field
+      // ✅ Check Firestore user document
       const userRef = doc(db, "users", uid);
       const userSnap = await getDoc(userRef);
 
-      if(!userSnap.exists()){
-        // User doc missing
-        location.replace("index.html");
+      if (!userSnap.exists()) {
+        errorDiv.textContent = "User not found. Please sign up!";
+        btnText.textContent = "Login";
         return;
       }
 
       const userData = userSnap.data();
 
-      if(userData.account === "approved"){
+      // ✅ Redirect based on account status
+      if (userData.account === "approved") {
         location.replace("dashboard.html");
-      } else if(userData.account === "pending"){
+      } else if (userData.account === "pending") {
         location.replace("approve.html");
       } else {
-        // fallback
-        location.replace("index.html");
+        errorDiv.textContent = "Account status unknown. Contact support.";
       }
 
     } catch (err) {
       console.error(err);
-      errorDiv.textContent = "Invalid email or password!";
+      errorDiv.textContent = "Invalid email or password! Please sign up if you don't have an account.";
     } finally {
       btnText.textContent = "Login";
     }
   });
 });
 </script>
+
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body { background: linear-gradient(180deg,#0b1d61,#0a184f); min-height:100vh; display:flex; justify-content:center; align-items:center; color:#fff; }
@@ -90,6 +93,7 @@ a { display:block; text-align:center; margin-top:10px; color:#9ec1ff; text-decor
 </style>
 </head>
 <body>
+
 <form id="loginForm">
 <h1>Login</h1>
 <div class="error" id="error"></div>
@@ -98,5 +102,6 @@ a { display:block; text-align:center; margin-top:10px; color:#9ec1ff; text-decor
 <button type="submit"><span id="btnText">Login</span></button>
 <a href="signup.html">Don't have an account? Sign Up</a>
 </form>
+
 </body>
 </html>

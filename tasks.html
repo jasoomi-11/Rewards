@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Tasks</title>
-
+<title>Daily Tasks Redirect</title>
 <style>
 body{
   margin:0;
@@ -75,7 +74,6 @@ header button{
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -89,27 +87,46 @@ header button{
 <div class="tasks" id="tasks"></div>
 
 <div class="note">
-⚠️ Note: Click will be enabled after countdown.  
-Earnings & clicks will be added only after verification on blog page.
+⚠️ Click will be enabled after countdown. Already clicked tasks are disabled. Earnings and clicks are updated on the real redirect page.
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+/* 🔥 FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+/* ⚙️ SETTINGS */
 const TASKS_JSON = "tasks.json";
 const COUNTDOWN_SECONDS = 5;
-const BLOG_VERIFY_PAGE = "blog.html";
-
+const DAILY_LIMIT = 20;
 let currentIndex = 0;
 
+/* 📅 TODAY */
+const today = () => new Date().toISOString().slice(0,10);
+
+/* 🔗 TOKEN GENERATOR */
 function generateToken(){
   return crypto.randomUUID() + "-" + Date.now();
 }
 
+/* FETCH TASKS JSON */
 async function loadTasks(){
   const res = await fetch(TASKS_JSON);
   return await res.json();
 }
 
-function createCard(task, index){
+/* CREATE TASK CARD */
+function createCard(task, index, userData){
   const card = document.createElement("div");
   card.className = "card";
 
@@ -121,25 +138,34 @@ function createCard(task, index){
 
   const btn = document.createElement("button");
   btn.textContent = "Locked";
-  btn.disabled = true;
+
+  // Disable if already clicked
+  const alreadyClicked = userData.usedLinks?.includes(task.link);
+  btn.disabled = alreadyClicked;
+  btn.textContent = alreadyClicked ? "✅ Completed" : "Locked";
 
   card.appendChild(title);
   card.appendChild(timer);
   card.appendChild(btn);
 
-  // Only first card gets countdown
-  if(index === currentIndex){
-    startCountdown(timer, btn, task, index);
-  }else{
-    timer.textContent = "🔒 Complete previous task first";
+  if(!alreadyClicked){
+    if(index === currentIndex){
+      startCountdown(timer, btn, task);
+    } else {
+      timer.textContent = "🔒 Complete previous task first";
+    }
+  } else {
+    timer.textContent = "✅ Already clicked";
   }
 
   return card;
 }
 
-function startCountdown(timer, btn, task, index){
+/* START COUNTDOWN */
+function startCountdown(timer, btn, task){
   let timeLeft = COUNTDOWN_SECONDS;
   timer.textContent = `⏳ Available in ${timeLeft}s`;
+  btn.disabled = true;
 
   const interval = setInterval(()=>{
     timeLeft--;
@@ -153,48 +179,38 @@ function startCountdown(timer, btn, task, index){
   },1000);
 
   btn.onclick = ()=>{
-    const token = generateToken();
-
-    const url = new URL(BLOG_VERIFY_PAGE, window.location.origin);
-    url.searchParams.set("token", token);
-    url.searchParams.set("redirect", task.link);
-
-    window.open(url.toString(), "_blank");
-
     btn.disabled = true;
-    btn.textContent = "Opened";
-
-    // Activate next card
-    currentIndex++;
-    activateNextCard();
+    timer.textContent = "Redirecting...";
+    // Only redirect, no Firestore updates here
+    window.location.href = task.link;
   };
 }
 
-function activateNextCard(){
-  const cards = document.querySelectorAll(".card");
-  if(currentIndex < cards.length){
-    const card = cards[currentIndex];
-    const timer = card.querySelector(".timer");
-    const btn = card.querySelector("button");
-    const taskLink = card.getAttribute("data-link");
+/* MAIN LOGIC - AUTH BASED UID */
+onAuthStateChanged(auth, async user => {
+  if(!user) return location.href="index.html"; // redirect if not logged in
+  const uid = user.uid;
 
-    startCountdown(timer, btn, {
-      link: taskLink
-    }, currentIndex);
-  }
-}
-
-(async ()=>{
   const tasks = await loadTasks();
   const container = document.getElementById("tasks");
 
-  tasks.slice(0,20).forEach((task, index)=>{
-    const card = createCard(task, index);
+  const userRef = doc(db,"users",uid);
+  const snap = await getDoc(userRef);
+  let userData = snap.exists() ? snap.data() : { usedLinks: [] };
+
+  currentIndex = userData.usedLinks?.length || 0;
+
+  if(userData.usedLinks?.length >= DAILY_LIMIT){
+    container.innerHTML = "<div class='note'>✅ All tasks completed for today!</div>";
+    return;
+  }
+
+  tasks.slice(0,DAILY_LIMIT).forEach((task,index)=>{
+    const card = createCard(task,index,userData);
     card.setAttribute("data-link", task.link);
     container.appendChild(card);
   });
-})();
+});
 </script>
-
 </body>
 </html>
