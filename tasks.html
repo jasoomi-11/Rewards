@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily Tasks</title>
-
 <style>
 body{
   margin:0;
@@ -36,6 +35,8 @@ header button{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
   gap:15px;
+  min-height:150px;
+  position:relative;
 }
 .card{
   background:#1e40af;
@@ -73,9 +74,24 @@ header button{
   font-size:14px;
   color:#cbd5f5;
 }
+.spinner{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  border:5px solid #94a3b8;
+  border-top:5px solid #22c55e;
+  border-radius:50%;
+  width:50px;
+  height:50px;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{
+  0%{transform:translate(-50%,-50%) rotate(0deg);}
+  100%{transform:translate(-50%,-50%) rotate(360deg);}
+}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -86,147 +102,161 @@ header button{
   </div>
 </header>
 
-<div class="tasks" id="tasks"></div>
-
-<div class="note">
-⏳ Countdown ke baad button enable hota hai.  
-✔️ Click ke baad task permanently disable ho jata hai.  
-💰 Earnings **sirf blog / ad page** par add hoti hain.
+<div class="tasks" id="tasks">
+  <div class="spinner" id="spinner"></div>
 </div>
 
-<script type="module">  
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";  
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";  
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";  
-  
-/* 🔥 FIREBASE CONFIG */  
-const firebaseConfig = {  
-  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",  
-  authDomain: "rewards-b8f54.firebaseapp.com",  
-  projectId: "rewards-b8f54"  
-};  
-const app = initializeApp(firebaseConfig);  
-const db = getFirestore(app);  
-const auth = getAuth(app);  
-  
-/* ⚙️ SETTINGS */  
-const TASKS_JSON = "tasks.json";  
-const COUNTDOWN = 5;  
-const DAILY_LIMIT = 20;  
-  
-/* 📅 TODAY */  
-const today = () => new Date().toISOString().slice(0,10);  
-  
-/* 🔐 TOKEN */  
-function generateToken(){  
-  return btoa(crypto.randomUUID() + "|" + Date.now());  
-}  
-  
-/* LOAD TASKS */  
-async function loadTasks(){  
-  const res = await fetch(TASKS_JSON,{ cache:"no-store" });  
-  return await res.json();  
-}  
-  
-/* CREATE CARD */  
-function createCard(task,index,userData,userRef,uid){  
-  const card = document.createElement("div");  
-  card.className = "card";  
-  
-  const title = document.createElement("h4");  
-  title.textContent = task.title;  
-  
-  const timer = document.createElement("div");  
-  timer.className = "timer";  
-  
-  const btn = document.createElement("button");  
-  
-  const alreadyDone = userData.usedLinks?.includes(task.id);  
-  btn.disabled = alreadyDone;  
-  btn.textContent = alreadyDone ? "✅ Completed" : "Locked";  
-  timer.textContent = alreadyDone ? "Already completed" : "";  
-  
-  card.append(title, timer, btn);  
-  
-  if(!alreadyDone){  
-    if(index === userData.usedLinks.length){  
-      startCountdown(timer, btn, task, userRef, uid);  
-    } else {  
-      timer.textContent = "🔒 Complete previous task first";  
-    }  
-  }  
-  
-  return card;  
-}  
-  
-/* COUNTDOWN + REDIRECT */  
-function startCountdown(timer, btn, task, userRef, uid){  
-  let sec = COUNTDOWN;  
-  timer.textContent = `⏳ Available in ${sec}s`;  
-  btn.disabled = true;  
-  
-  const iv = setInterval(()=>{  
-    sec--;  
-    timer.textContent = `⏳ Available in ${sec}s`;  
-    if(sec <= 0){  
-      clearInterval(iv);  
-      timer.textContent = "✅ Click to continue";  
-      btn.textContent = "Continue";  
-      btn.disabled = false;  
-    }  
-  },1000);  
-  
-  btn.onclick = async () => {  
-    btn.disabled = true;  
-    timer.textContent = "Redirecting...";  
-  
-    const token = generateToken();  
-  
-    await updateDoc(userRef,{  
-      usedTokens: arrayUnion(token),  
-      usedLinks: arrayUnion(task.id)  
-    });  
-  
-    /* ✅ FIXED LINE (task.link) */
-    location.href = `${task.link}?uid=${uid}&token=${token}`;  
-  };  
-}  
-  
-/* MAIN */  
-onAuthStateChanged(auth, async user => {  
-  if(!user) return location.href = "index.html";  
-  const uid = user.uid;  
-  
-  const tasks = await loadTasks();  
-  const container = document.getElementById("tasks");  
-  
-  const userRef = doc(db,"users",uid);  
-  const snap = await getDoc(userRef);  
-  let userData = snap.exists()  
-    ? snap.data()  
-    : { usedLinks:[], usedTokens:[], tasksDate:"" };  
-  
-  if(userData.tasksDate !== today()){  
-    await updateDoc(userRef,{  
-      tasksDate: today(),  
-      usedLinks: [],  
-      usedTokens: []  
-    });  
-    userData.usedLinks = [];  
-    userData.usedTokens = [];  
-  }  
-  
-  if(userData.usedLinks.length >= DAILY_LIMIT){  
-    container.innerHTML = "<div class='note'>✅ All tasks completed for today</div>";  
-    return;  
-  }  
-  
-  tasks.slice(0,DAILY_LIMIT).forEach((task,i)=>{  
-    container.appendChild(  
-      createCard(task, i, userData, userRef, uid)  
-    );  
-  });  
-});  
+<div class="note">
+⏳ Countdown ke baad button enable hota hai.<br>
+✔️ Click ke baad task permanently disable ho jata hai.<br>
+💰 Earnings sirf blog/ad page par add hoti hain.
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Settings
+const TASKS_JSON = "assets/tasks.json"; // JSON path
+const COUNTDOWN = 5;
+const DAILY_LIMIT = 20;
+
+// Helpers
+const today = () => new Date().toISOString().slice(0,10);
+const generateToken = () => btoa(crypto.randomUUID() + "|" + Date.now());
+
+// Load tasks.json
+async function loadTasks() {
+  try {
+    const res = await fetch(TASKS_JSON, {cache:"no-store"});
+    if(!res.ok) throw new Error("Failed to fetch tasks JSON");
+    const data = await res.json();
+    if(!Array.isArray(data)) throw new Error("Invalid JSON structure");
+    return data;
+  } catch(e) {
+    alert("Tasks fetch error: " + e.message);
+    throw e;
+  }
+}
+
+// Create card
+function createCard(task,index,userData,userRef,uid){
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const title = document.createElement("h4");
+  title.textContent = task.title;
+
+  const timer = document.createElement("div");
+  timer.className = "timer";
+
+  const btn = document.createElement("button");
+  const alreadyDone = userData.usedLinks?.includes(task.id);
+
+  btn.disabled = alreadyDone;
+  btn.textContent = alreadyDone ? "✅ Completed" : "Locked";
+  timer.textContent = alreadyDone ? "Already completed" : "";
+
+  card.append(title,timer,btn);
+
+  if(!alreadyDone){
+    if(index === userData.usedLinks.length){
+      startCountdown(timer,btn,task,userRef,uid);
+    } else {
+      timer.textContent="🔒 Complete previous task first";
+    }
+  }
+  return card;
+}
+
+// Countdown + redirect
+function startCountdown(timer,btn,task,userRef,uid){
+  let sec = COUNTDOWN;
+  timer.textContent = `⏳ Available in ${sec}s`;
+  btn.disabled = true;
+
+  const iv = setInterval(()=>{
+    sec--;
+    timer.textContent = `⏳ Available in ${sec}s`;
+    if(sec <= 0){
+      clearInterval(iv);
+      timer.textContent = "✅ Click to continue";
+      btn.textContent = "Continue";
+      btn.disabled = false;
+    }
+  },1000);
+
+  btn.onclick = async () => {
+    btn.disabled = true;
+    timer.textContent = "Redirecting...";
+    const token = generateToken();
+
+    try {
+      await userRef.update({
+        usedTokens: firebase.firestore.FieldValue.arrayUnion(token),
+        usedLinks: firebase.firestore.FieldValue.arrayUnion(task.id)
+      });
+    } catch(e){
+      alert("Firebase update error: "+e.message);
+      return;
+    }
+
+    location.href = `${task.link}?uid=${uid}&token=${token}`;
+  };
+}
+
+// Main
+auth.onAuthStateChanged(async user => {
+  const container = document.getElementById("tasks");
+  const spinner = document.getElementById("spinner");
+
+  if(!user){
+    spinner.style.display="none";
+    alert("User not logged in");
+    return location.href="index.html";
+  }
+
+  const uid = user.uid;
+  const userRef = db.collection("users").doc(uid);
+  let snap;
+  try { snap = await userRef.get(); }
+  catch(e){ spinner.style.display="none"; alert("Firebase error: "+e.message); return; }
+
+  let userData = snap.exists ? snap.data() : { usedLinks:[], usedTokens:[], tasksDate:"" };
+
+  // Daily reset
+  if(userData.tasksDate !== today()){
+    await userRef.update({ tasksDate: today(), usedLinks:[], usedTokens:[] });
+    userData.usedLinks = [];
+    userData.usedTokens = [];
+  }
+
+  // Load tasks
+  let tasks;
+  try { tasks = await loadTasks(); } catch(e){ spinner.style.display="none"; return; }
+  spinner.style.display="none";
+
+  if(userData.usedLinks.length >= DAILY_LIMIT){
+    container.innerHTML="<div class='note'>✅ All tasks completed for today</div>";
+    return;
+  }
+
+  tasks.slice(0,DAILY_LIMIT).forEach((task,i)=>{
+    container.appendChild(createCard(task,i,userData,userRef,uid));
+  });
+});
 </script>
 
 </body>
