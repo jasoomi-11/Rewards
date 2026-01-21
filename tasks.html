@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Tasks Redirect</title>
+<title>Daily Tasks</title>
+
 <style>
 body{
   margin:0;
@@ -74,9 +75,11 @@ header button{
 }
 </style>
 </head>
+
 <body>
+
 <header>
-  <h2>Redirect Tasks</h2>
+  <h2>Daily Tasks</h2>
   <div>
     <button onclick="location.href='dashboard.html'">Back</button>
     <button onclick="location.href='index.html'">Logout</button>
@@ -84,13 +87,16 @@ header button{
 </header>
 
 <div class="tasks" id="tasks"></div>
+
 <div class="note">
-⚠️ Click will be enabled after countdown. Already clicked tasks are disabled. Earnings and clicks are updated on the real redirect page.
+⏳ Countdown ke baad button enable hota hai.  
+✔️ Click ke baad task permanently disable ho jata hai.  
+💰 Earnings **sirf blog / ad page** par add hoti hain.
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 /* 🔥 FIREBASE CONFIG */
@@ -105,131 +111,120 @@ const auth = getAuth(app);
 
 /* ⚙️ SETTINGS */
 const TASKS_JSON = "tasks.json";
-const COUNTDOWN_SECONDS = 5;
+const COUNTDOWN = 5;
 const DAILY_LIMIT = 20;
-let currentIndex = 0;
 
 /* 📅 TODAY */
 const today = () => new Date().toISOString().slice(0,10);
 
-/* 🔗 TOKEN GENERATOR */
-function generateToken(){  
-  return crypto.randomUUID() + "-" + Date.now();  
+/* 🔐 TOKEN */
+function generateToken(){
+  return btoa(crypto.randomUUID() + "|" + Date.now());
 }
 
-/* FETCH TASKS JSON */
-async function loadTasks(){  
-  const res = await fetch(TASKS_JSON);  
-  return await res.json();  
+/* LOAD TASKS */
+async function loadTasks(){
+  const res = await fetch(TASKS_JSON,{cache:"no-store"});
+  return await res.json();
 }
 
-/* CREATE TASK CARD */
-function createCard(task, index, userData, userRef){
+/* CREATE CARD */
+function createCard(task,index,userData,userRef,uid){
   const card = document.createElement("div");
-  card.className = "card";
+  card.className="card";
 
-  const title = document.createElement("h4");
-  title.textContent = task.title;
+  const title=document.createElement("h4");
+  title.textContent=task.title;
 
-  const timer = document.createElement("div");
-  timer.className = "timer";
+  const timer=document.createElement("div");
+  timer.className="timer";
 
-  const btn = document.createElement("button");
-  btn.textContent = "Locked";
+  const btn=document.createElement("button");
 
-  const alreadyClicked = userData.usedLinks?.includes(task.link);
-  btn.disabled = alreadyClicked;
-  btn.textContent = alreadyClicked ? "✅ Completed" : "Locked";
+  const alreadyDone = userData.usedLinks?.includes(task.id);
+  btn.disabled = alreadyDone;
+  btn.textContent = alreadyDone ? "✅ Completed" : "Locked";
+  timer.textContent = alreadyDone ? "Already completed" : "";
 
-  card.appendChild(title);
-  card.appendChild(timer);
-  card.appendChild(btn);
+  card.append(title,timer,btn);
 
-  if(!alreadyClicked){
-    if(index === currentIndex){
-      startCountdown(timer, btn, task, userRef);
-    } else {
-      timer.textContent = "🔒 Complete previous task first";
+  if(!alreadyDone){
+    if(index === userData.usedLinks.length){
+      startCountdown(timer,btn,task,userRef,uid);
+    }else{
+      timer.textContent="🔒 Complete previous task first";
     }
-  } else {
-    timer.textContent = "✅ Already clicked";
   }
 
   return card;
 }
 
-/* START COUNTDOWN */
-function startCountdown(timer, btn, task, userRef){
-  let timeLeft = COUNTDOWN_SECONDS;
-  timer.textContent = `⏳ Available in ${timeLeft}s`;
-  btn.disabled = true;
+/* COUNTDOWN + REDIRECT */
+function startCountdown(timer,btn,task,userRef,uid){
+  let sec=COUNTDOWN;
+  timer.textContent=`⏳ Available in ${sec}s`;
+  btn.disabled=true;
 
-  const interval = setInterval(()=>{
-    timeLeft--;
-    timer.textContent = `⏳ Available in ${timeLeft}s`;
-    if(timeLeft <= 0){
-      clearInterval(interval);
-      timer.textContent = "✅ Click to continue";
-      btn.textContent = "Go to Link";
-      btn.disabled = false;
+  const iv=setInterval(()=>{
+    sec--;
+    timer.textContent=`⏳ Available in ${sec}s`;
+    if(sec<=0){
+      clearInterval(iv);
+      timer.textContent="✅ Click to continue";
+      btn.textContent="Continue";
+      btn.disabled=false;
     }
   },1000);
 
-  btn.onclick = async () => {
-    btn.disabled = true;
-    timer.textContent = "Redirecting...";
-    const token = generateToken();
+  btn.onclick=async()=>{
+    btn.disabled=true;
+    timer.textContent="Redirecting...";
 
-    // Firestore update: clicks, token, used link
+    const token=generateToken();
+
+    // ONLY save token + used task
     await updateDoc(userRef,{
-      totalClicks: increment(1),
-      todayClicks: increment(1),
       usedTokens: arrayUnion(token),
-      usedLinks: arrayUnion(task.link)
+      usedLinks: arrayUnion(task.id)
     });
 
-    // Redirect
-    window.location.href = task.link;
+    // 🔥 REDIRECT WITH UID + TOKEN
+    location.href = `${task.url}?uid=${uid}&token=${token}`;
   };
 }
 
-/* MAIN LOGIC */
-onAuthStateChanged(auth, async user => {
+/* MAIN */
+onAuthStateChanged(auth,async user=>{
   if(!user) return location.href="index.html";
-  const uid = user.uid;
+  const uid=user.uid;
 
-  const tasks = await loadTasks();
-  const container = document.getElementById("tasks");
+  const tasks=await loadTasks();
+  const container=document.getElementById("tasks");
 
-  const userRef = doc(db,"users",uid);
-  const snap = await getDoc(userRef);
-  let userData = snap.exists() ? snap.data() : { usedLinks: [], todayClicks:0, tasksDate:"" };
+  const userRef=doc(db,"users",uid);
+  const snap=await getDoc(userRef);
+  let userData=snap.exists()?snap.data():{usedLinks:[],usedTokens:[],tasksDate:""};
 
-  // Daily reset
-  if(userData.tasksDate !== today()){
+  if(userData.tasksDate!==today()){
     await updateDoc(userRef,{
-      tasksDate: today(),
-      todayClicks: 0,
-      usedTokens: [],
-      usedLinks: []
+      tasksDate:today(),
+      usedLinks:[],
+      usedTokens:[]
     });
-    userData.todayClicks = 0;
-    userData.usedTokens = [];
-    userData.usedLinks = [];
+    userData.usedLinks=[];
+    userData.usedTokens=[];
   }
 
-  currentIndex = userData.usedLinks?.length || 0;
-
-  if(userData.usedLinks?.length >= DAILY_LIMIT){
-    container.innerHTML = "<div class='note'>✅ All tasks completed for today!</div>";
+  if(userData.usedLinks.length>=DAILY_LIMIT){
+    container.innerHTML="<div class='note'>✅ All tasks completed for today</div>";
     return;
   }
 
-  tasks.slice(0,DAILY_LIMIT).forEach((task,index)=>{
-    const card = createCard(task,index,userData,userRef);
-    container.appendChild(card);
+  tasks.slice(0,DAILY_LIMIT).forEach((task,i)=>{
+    container.appendChild(createCard(task,i,userData,userRef,uid));
   });
 });
 </script>
+
 </body>
 </html>
