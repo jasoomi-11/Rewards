@@ -38,7 +38,7 @@ header button{border:none;padding:8px 14px;border-radius:8px;background:#2563eb;
 <div class="note">
 ⏳ Countdown ke baad button enable hota hai.<br>
 ✔️ Click ke baad task permanently disabled until next day.<br>
-💰 Only usedLinks and usedTokens stored, redirect with uid+token.
+💰 Each click generates unique token and redirects to ad page.
 </div>
 
 <script type="module">
@@ -46,6 +46,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/fireba
 import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
+/* FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
@@ -55,6 +56,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+/* SETTINGS */
 const TASKS_JSON = "assets/tasks.json";
 const COUNTDOWN = 5;
 
@@ -155,12 +157,12 @@ function startCountdown(cardObj) {
     if (sec <= 0) {
       clearInterval(interval);
       cardObj.timer.textContent = "✅ Click to continue";
-      cardObj.btn.textContent = "Continue";
+      cardObj.btn.textContent = "Go to Ad Page";
       cardObj.btn.disabled = false;
     }
   }, 1000);
 
-  // Handle click: generate token and redirect
+  // Handle click: generate token and redirect to Page 2
   cardObj.btn.onclick = async () => {
     cardObj.btn.disabled = true;
     cardObj.timer.textContent = "Redirecting...";
@@ -172,15 +174,20 @@ function startCountdown(cardObj) {
       return;
     }
 
-    // Generate unique token for verification on the blog page
+    // Generate unique token for Page 2 verification
     const token = btoa(crypto.randomUUID() + "|" + Date.now());
+
+    // Save token in Firestore for this user
+    await updateDoc(doc(db, "users", user.uid), {
+      usedTokens: arrayUnion(token)
+    });
+
+    // Redirect to Page 2 (ad container page) with uid + token
+    window.location.href = `${task.link}?uid=${user.uid}&token=${token}`;
 
     // Start countdown for next card immediately
     currentIndex++;
     startNextCard();
-
-    // Redirect with uid + token
-    window.location.href = `${cardObj.task.link}?uid=${user.uid}&token=${token}`;
   };
 }
 
@@ -190,7 +197,7 @@ function startNextCard() {
     const c = cards[currentIndex];
     if (!c.card.classList.contains("completed")) {
       startCountdown(c);
-      break; // only one card countdown at a time
+      break;
     }
     currentIndex++;
   }
