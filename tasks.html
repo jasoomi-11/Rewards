@@ -38,7 +38,7 @@ header button{border:none;padding:8px 14px;border-radius:8px;background:#2563eb;
 <div class="note">
 ⏳ Countdown ke baad button enable hota hai.<br>
 ✔️ Click ke baad task permanently disabled until next day.<br>
-💰 Each click generates unique token and redirects to ad page.
+💰 Each click generates unique token and redirects to ad page (Page 2).
 </div>
 
 <script type="module">
@@ -162,7 +162,6 @@ function startCountdown(cardObj) {
     }
   }, 1000);
 
-  // Handle click: generate token and redirect to Page 2
   cardObj.btn.onclick = async () => {
     cardObj.btn.disabled = true;
     cardObj.timer.textContent = "Redirecting...";
@@ -174,18 +173,17 @@ function startCountdown(cardObj) {
       return;
     }
 
-    // Generate unique token for Page 2 verification
     const token = btoa(crypto.randomUUID() + "|" + Date.now());
 
-    // Save token in Firestore for this user
+    // Save token + link for this user
     await updateDoc(doc(db, "users", user.uid), {
-      usedTokens: arrayUnion(token)
+      usedTokens: arrayUnion(token),
+      usedLinks: arrayUnion(cardObj.task.link)
     });
 
-    // Redirect to Page 2 (ad container page) with uid + token
-    window.location.href = `${task.link}?uid=${user.uid}&token=${token}`;
+    // Redirect to ad page (Page 2) with uid + token
+    window.location.href = `${cardObj.task.link}?uid=${user.uid}&token=${token}`;
 
-    // Start countdown for next card immediately
     currentIndex++;
     startNextCard();
   };
@@ -209,6 +207,5 @@ onAuthStateChanged(auth, user => {
   else loadTasks();
 });
 </script>
-
 </body>
 </html>
