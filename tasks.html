@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,8 +38,8 @@ header button{border:none;padding:8px 14px;border-radius:8px;background:#2563eb;
 
 <div class="note">
 ⏳ Countdown ke baad button enable hota hai.<br>
-✔️ Click ke baad task permanently disabled until next day.<br>
-💰 Each click generates unique token and redirects to ad page (Page 2).
+✔️ Click ke baad task disabled until next day.<br>
+💰 Click ke baad redirect to Page 2.
 </div>
 
 <script type="module">
@@ -66,59 +67,51 @@ const spinner = document.getElementById("spinner");
 let cards = [];
 let currentIndex = 0;
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+function today() { return new Date().toISOString().slice(0,10); }
 
-// Load tasks from JSON and user data
-async function loadTasks() {
-  try {
-    const res = await fetch(TASKS_JSON, { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+// Load tasks and user data
+async function loadTasks(){
+  try{
+    const res = await fetch(TASKS_JSON, {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const tasks = await res.json();
     spinner.style.display = "none";
 
-    if (data.length === 0) {
+    if(tasks.length === 0){
       tasksContainer.innerHTML = "<div class='note'>No tasks available.</div>";
       return;
     }
 
     const user = auth.currentUser;
-    const userRef = doc(db, "users", user.uid);
+    const userRef = doc(db,"users",user.uid);
     const snap = await getDoc(userRef);
-    let userData = snap.exists() ? snap.data() : { usedLinks: [], usedTokens: [], tasksDate: "" };
+    let userData = snap.exists()? snap.data() : { usedLinks: [], tasksDate: "" };
 
     // Reset daily tasks
-    if (userData.tasksDate !== today()) {
-      await updateDoc(userRef, { tasksDate: today(), usedLinks: [], usedTokens: [] });
+    if(userData.tasksDate !== today()){
+      await updateDoc(userRef, { tasksDate: today(), usedLinks: [] });
       userData.usedLinks = [];
-      userData.usedTokens = [];
     }
 
     // Create cards
-    data.forEach((task, i) => {
-      const card = createCard(task, i, userData);
+    tasks.forEach((task,i)=>{
+      const card = createCard(task, userData);
       tasksContainer.appendChild(card);
-      cards.push({
-        card,
-        task,
-        timer: card.querySelector(".timer"),
-        btn: card.querySelector("button")
-      });
+      cards.push({ card, task, timer: card.querySelector(".timer"), btn: card.querySelector("button") });
     });
 
-    // Start first card countdown
+    // Start countdown for first uncompleted card
     startNextCard();
 
-  } catch (err) {
+  }catch(err){
     spinner.style.display = "none";
-    alert("Error fetching tasks: " + err.message);
     tasksContainer.innerHTML = "<div class='note'>Failed to load tasks.</div>";
+    console.error(err);
   }
 }
 
 // Create single task card
-function createCard(task, index, userData) {
+function createCard(task,userData){
   const card = document.createElement("div");
   card.className = "card";
 
@@ -130,7 +123,7 @@ function createCard(task, index, userData) {
 
   const btn = document.createElement("button");
 
-  if (userData.usedLinks?.includes(task.link)) {
+  if(userData.usedLinks?.includes(task.link)){
     btn.disabled = true;
     btn.textContent = "✅ Completed";
     card.classList.add("completed");
@@ -141,59 +134,55 @@ function createCard(task, index, userData) {
     timer.textContent = "Locked";
   }
 
-  card.append(title, timer, btn);
+  card.append(title,timer,btn);
   return card;
 }
 
-// Start countdown for a card
-function startCountdown(cardObj) {
+// Countdown per card
+function startCountdown(cardObj){
   let sec = COUNTDOWN;
   cardObj.timer.textContent = `⏳ Available in ${sec}s`;
   cardObj.btn.disabled = true;
 
-  const interval = setInterval(() => {
+  const interval = setInterval(()=>{
     sec--;
     cardObj.timer.textContent = `⏳ Available in ${sec}s`;
-    if (sec <= 0) {
+    if(sec <=0){
       clearInterval(interval);
       cardObj.timer.textContent = "✅ Click to continue";
       cardObj.btn.textContent = "Go to Ad Page";
       cardObj.btn.disabled = false;
     }
-  }, 1000);
+  },1000);
 
-  cardObj.btn.onclick = async () => {
+  // On click: store link and redirect to Page 2
+  cardObj.btn.onclick = async ()=>{
     cardObj.btn.disabled = true;
     cardObj.timer.textContent = "Redirecting...";
     cardObj.btn.textContent = "Redirecting...";
 
     const user = auth.currentUser;
-    if (!user) {
-      alert("User not logged in");
-      return;
-    }
+    if(!user) { alert("User not logged in"); return; }
 
-    const token = btoa(crypto.randomUUID() + "|" + Date.now());
+    const userRef = doc(db,"users",user.uid);
 
-    // Save token + link for this user
-    await updateDoc(doc(db, "users", user.uid), {
-      usedTokens: arrayUnion(token),
-      usedLinks: arrayUnion(cardObj.task.link)
-    });
+    // Store the clicked task link in Firestore
+    await updateDoc(userRef, { usedLinks: arrayUnion(cardObj.task.link) });
 
-    // Redirect to ad page (Page 2) with uid + token
-    window.location.href = `${cardObj.task.link}?uid=${user.uid}&token=${token}`;
+    // Redirect to Page 2 with uid + clicked link
+    window.location.href = `page2.html?uid=${user.uid}&link=${encodeURIComponent(cardObj.task.link)}`;
 
+    // Start next card countdown
     currentIndex++;
     startNextCard();
   };
 }
 
-// Sequential unlock: start countdown for the next uncompleted card
-function startNextCard() {
-  while (currentIndex < cards.length) {
+// Start next uncompleted card countdown
+function startNextCard(){
+  while(currentIndex < cards.length){
     const c = cards[currentIndex];
-    if (!c.card.classList.contains("completed")) {
+    if(!c.card.classList.contains("completed")){
       startCountdown(c);
       break;
     }
@@ -202,8 +191,8 @@ function startNextCard() {
 }
 
 // Auth check
-onAuthStateChanged(auth, user => {
-  if (!user) location.href = "index.html";
+onAuthStateChanged(auth, user=>{
+  if(!user) location.href="index.html";
   else loadTasks();
 });
 </script>
