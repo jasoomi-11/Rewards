@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+  
+  
+  
+  
+:root {
+    --deep-black: #03040f;
+    --card-bg: #0a1226;
+    --text-light: #d9e6ff;
+    --text-subtle: #7C8FB5;
+    --text-blue: #7cc7ff;
+    --accent-blue: #3daaff;
+}
+
+/* Reset & font */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: var(--deep-black);
+    color: var(--text-light);
+    padding-bottom: 60px;
+}
+
+/* ================= HEADER ================= */
+.main-header {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 12px 18px;
+    background: var(--deep-black);
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 20px;
+    z-index: 1000;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+}
+
+.logo img {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.hamburger {
+    font-size: 30px;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 260px;
+    height: 100%;
+    background: #02030d;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.6);
+    transition: left 0.3s ease;
+    z-index: 2000;
+    padding-top: 70px;
+}
+.sidebar.active { left: 0; }
+
+.sidebar-header {
+    position: absolute;
+    top: 15px;
+    width: 100%;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-btn {
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.sidebar-section a {
+    display: block;
+    padding: 15px 20px;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 16px;
+    border-bottom: 1px solid #0b1124;
+}
+.sidebar-section a:hover {
+    background: #0a1433;
+}
+
+/* ================= BLANK PAGE CONTENT ================= */
+.content-wrapper {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    text-align: center;
+    border: 2px dashed #0a1433;
+    border-radius: 15px;
+}
+
+/* ================= GUIDES GRID / CARDS ================= */
+.guides-section {
+    padding: 25px 0;
+    width: 100%;
+}
+
+.guides-title {
+    color: var(--text-blue);
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    padding-left: 4px;
+    border-left: 4px solid var(--accent-blue);
+}
+
+.guides-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+
+/* Guide Card */
+.guide-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #1d2d53;
+    transition: all 0.3s ease;
+}
+
+.guide-item:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 20px rgba(61, 170, 255, 0.35);
+    transform: translateY(-3px);
+}
+
+.guide-thumb {
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid #1d2d53;
+}
+
+.guide-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Text */
+.guide-text h3 {
+    color: var(--text-light);
+    font-size: 18px;
+    margin: 0;
+    font-weight: 600;
+}
+
+.guide-text p {
+    color: var(--text-subtle);
+    font-size: 14px;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Responsive Cards */
+@media (min-width: 600px) {
+    .guides-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (min-width: 1100px) {
+    .guides-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ================= HERO SECTION ================= */
+.hero-section {
+    width: 100%;
+    padding: 70px 25px;
+    margin-top: 25px;
+    background: linear-gradient(145deg, #03040f, #08152e, #0b1b3f);
+    border-radius: 22px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(0,0,0,0.45);
+    border: 1px solid rgba(61, 170, 255, 0.12);
+}
+
+.hero-title {
+    font-size: 36px;
+    color: var(--text-blue);
+    font-weight: 700;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 12px rgba(124,199,255,0.35);
+}
+
+.hero-text {
+    font-size: 17px;
+    color: var(--text-light);
+    max-width: 780px;
+    margin: 0 auto;
+    line-height: 1.7;
+    opacity: 0.92;
+}
+
+@media (max-width: 600px) {
+    .hero-title {
+        font-size: 28px;
+    }
+    .hero-text {
+        font-size: 15px;
+    }
+}
+
+/* ================= SEARCH BAR ================= */
+.search-container {
+    position: sticky;
+    top: 90px;
+    max-width: 650px;
+    margin: 10px auto;
+    z-index: 999;
+    background: #0d1b2a;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#universal-search {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #1b263b;
+    border-radius: 8px;
+    outline: none;
+    background: #1b263b;
+    color: var(--text-light);
+}
+
+#universal-search::placeholder {
+    color: #8da0b8;
+}
+
+/* Search results dropdown */
+.search-results {
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    background: #0d1b2a;
+    border: 1px solid #1b263b;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.search-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid #1b263b;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.search-item:hover,
+.search-item.active {
+    background: #274156;
+}
+.search-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #1b263b;
+}
+.search-item h4 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-light);
+}
+.search-item p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #8da0b8;
+}
+
+/* ================= FOOTER ================= */
+.blueverse-footer {
+    background: #071a2b;
+    padding: 40px 20px;
+    font-family: Arial, sans-serif;
+    color: #d2ecff;
+    margin-top: 40px;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 30px;
+}
+
+.footer-logo {
+    color: #8fd1ff;
+    margin-bottom: 10px;
+}
+
+.footer-desc {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.footer-heading {
+    color: #8fd1ff;
+    margin-bottom: 10px;
+}
+
+.footer-links ul,
+.footer-policies ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.8;
+}
+
+.footer-links ul li a,
+.footer-policies ul li a {
+    color: #d2ecff;
+    text-decoration: none;
+    transition: 0.25s;
+}
+.footer-links ul li a:hover,
+.footer-policies ul li a:hover {
+    color: var(--text-blue);
+}
+
+.social-btns {
+    display: flex;
+    gap: 12px;
+}
+.social-btns a {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0d2a45;
+    border-radius: 50%;
+    transition: 0.25s;
+}
+.social-btns a:hover {
+    background: #007bff;
+}
+.social-btns a img {
+    width: 20px;
+}
+
+.footer-disclaimer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #9ec8e6;
+}
+.footer-bottom {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: #7bb7dd;
+}
+
+@media (max-width: 600px) {
+    .footer-container {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .social-btns {
+        justify-content: center;
+    }
+}
+
+
+
+</style>
+
+
+
+
+
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="main-header">
+    <div class="logo">
+        <img src="/assets/thumb/logo.png" alt="Logo">
+    </div>
+    <div class="hamburger" onclick="toggleSidebar()">☰</div>
+</header>
+
+
+
+
+ <!-- Search Bar Container -->
+<div class="search-container">
+  <input type="text" id="universal-search" placeholder="Search Guides or games..." autocomplete="off"/>
+  <div id="search-results" class="search-results"></div>
+</div>
+
+
+
+
+
+
+
+
+<!-- ================= SIDEBAR ================= -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <br><h3 style="color: var(--text-light);">Boost💰 Your Finances</h3>
+        <div class="close-btn" onclick="toggleSidebar()">✖</div>
+    </div>
+
+    <div class="sidebar-section">
+        <a href="/">🏠 Home</a>
+        <a href="/earning/all.html">💸 Earning Guides</a>
+        <a href="/finance/all.html">💡 Finance Tips</a>
+        <a href="/digital/all.html">📲 Digital Wallets</a>
+        
+        <a href="/about.html">🌐 About Us</a>
+        <a href="/policies.html">📜 Privacy Policy</a>
+        <a href="/terms.html">⚖ Terms & Conditions</a>
+        <a href="/contact.html">📞 Contact</a>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<main>
+  
+
+
+
+<div id="adContainer">
+  <div id="timer" class="waiting">⏳ Verifying...</div>
+  <div id="progressBar">
+    <div id="progress"></div>
+  </div>
+  <button id="adBtn" disabled>Continue</button>
+</div>
+
+<style>
+#adContainer {
+  max-width:420px;
+  margin:50px auto;
+  padding:24px;
+  background:linear-gradient(135deg,#1e3a8a,#2563eb);
+  border-radius:18px;
+  box-shadow:0 15px 35px rgba(0,0,0,.45);
+  text-align:center;
+  font-family:Segoe UI,system-ui;
+  color:#fff;
+}
+#timer { font-size:18px; font-weight:600; margin-bottom:14px; color:#c7d2fe; }
+#progressBar { width:100%; height:8px; background:#94a3b8; border-radius:6px; overflow:hidden; margin-bottom:18px; }
+#progress { width:0%; height:100%; background:#22c55e; transition:width 1s linear; }
+#adBtn { width:100%; padding:14px; font-size:16px; font-weight:700; border:none; border-radius:14px; background:#22c55e; color:#000; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.35); transition:.3s; }
+#adBtn:hover:not(:disabled) { background:#16a34a; transform:translateY(-2px); }
+#adBtn:disabled { background:#94a3b8; cursor:not-allowed; }
+@keyframes pulse { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
+.waiting { animation:pulse 1s infinite; }
+</style>
+
+
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+// FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// SETTINGS
+const COUNTDOWN = 5;
+const PLATFORM_EARNING = 0.0005;
+const DAILY_LIMIT = 120;
+const JSON_FILES = ["1.json","2.json","3.json"]; // your ad JSON files
+
+// UI
+const btn = document.getElementById("adBtn");
+const timer = document.getElementById("timer");
+const progress = document.getElementById("progress");
+
+// Get params from URL
+const params = new URLSearchParams(window.location.search);
+const uid = params.get("uid");
+const clickedUrl = params.get("link"); // Page1 clicked URL
+
+if (!uid || !clickedUrl) {
+  btn.disabled = true;
+  timer.innerText = "❌ Invalid access";
+  throw new Error("Missing uid or link in URL");
+}
+
+// Fetch next unused ad link from JSON
+async function getNextUnusedAd(userData) {
+  for (const file of JSON_FILES) {
+    try {
+      const res = await fetch(file, { cache: "no-store" });
+      if (!res.ok) continue;
+      const data = await res.json(); // assume JSON is array of URLs
+      const unused = data.filter(url => !userData.usedLinks?.includes(url));
+      if (unused.length) return unused[0]; // return first unused
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return null;
+}
+
+async function init() {
+  btn.disabled = true;
+  timer.innerText = "⏳ Verifying...";
+
+  const userRef = doc(db, "users", uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) {
+    timer.innerText = "❌ Unauthorized user";
+    return;
+  }
+
+  let userData = snap.data();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  // Reset daily counters if new day
+  if (userData.tasksDate !== todayStr) {
+    await updateDoc(userRef, {
+      tasksDate: todayStr,
+      todayClicks: 0,
+      usedLinks: [],
+      lockedUntil: null
+    });
+    userData.todayClicks = 0;
+    userData.usedLinks = [];
+    userData.lockedUntil = null;
+  }
+
+  // Check if Page1 link already clicked
+  if (userData.usedLinks?.includes(clickedUrl)) {
+    btn.disabled = true;
+    timer.innerText = "✅ Task already completed";
+    return;
+  }
+
+  // Check daily limit
+  if (userData.todayClicks >= DAILY_LIMIT) {
+    btn.disabled = true;
+    timer.innerText = "❌ Daily limit reached";
+    return;
+  }
+
+  // Get next unused ad link
+  const nextAd = await getNextUnusedAd(userData);
+  if (!nextAd) {
+    btn.disabled = true;
+    timer.innerText = "⚠️ No ad links available";
+    return;
+  }
+
+  // Start 5s countdown
+  let sec = COUNTDOWN;
+  progress.style.width = "0%";
+  timer.innerText = `⏳ Available in ${sec}s`;
+
+  const interval = setInterval(() => {
+    sec--;
+    timer.innerText = `⏳ Available in ${sec}s`;
+    progress.style.width = `${((COUNTDOWN - sec)/COUNTDOWN)*100}%`;
+    if (sec <= 0) {
+      clearInterval(interval);
+      timer.innerText = "✅ Click to continue";
+      btn.disabled = false;
+    }
+  }, 1000);
+
+  // Button click: store Page1 + Page2 link and earnings
+  btn.onclick = async () => {
+    btn.disabled = true;
+    timer.innerText = "Redirecting...";
+
+    await updateDoc(userRef, {
+      usedLinks: arrayUnion(clickedUrl, nextAd),
+      todayClicks: increment(1),
+      totalClicks: increment(1),
+      totalEarnings: increment(PLATFORM_EARNING)
+    });
+
+    window.location.href = nextAd; // redirect to ad
+  };
+}
+
+init();
+</script>
+
+
+
+
+
+
+
+
+
+</main>
+
+
+
+
+
+<!-- ================= FOOTER ================= -->
+<footer class="blueverse-footer">
+
+  <div class="footer-container">
+
+    <!-- Logo + About -->
+    <div class="footer-about">
+      <h2 class="footer-logo">BlueVerse</h2>
+      <p class="footer-desc">
+        BlueVerse is your hub for finance guides, earning apps, online income strategies, digital wallets, and tips to manage your money smartly. 💰
+      </p>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="footer-links">
+      <h3 class="footer-heading">Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/earning/all.html">Earning Guides</a></li>
+        <li><a href="/finance/all.html">Finance Tips</a></li>
+        <li><a href="/digital/all.html">Digital Wallets</a></li>
+        
+      </ul>
+    </div>
+
+    <!-- Policies -->
+    <div class="footer-policies">
+      <h3 class="footer-heading">Policies</h3>
+      <ul>
+        <li><a href="/policies.html">Privacy Policy</a></li>
+        <li><a href="/terms.html">Terms & Conditions</a></li>
+        
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+    </div>
+
+  </div> <!-- /.footer-container -->
+
+  <!-- Disclaimer -->
+  <div class="footer-disclaimer">
+    <p>All finance guides, earning apps, and online strategies are for informational purposes only.</p>
+    <p>All company names, logos, and assets belong to their respective owners.</p>
+  </div>
+
+  <div class="footer-bottom">
+    © 2026 BlueVerse Finance. All Rights Reserved.
+  </div>
+
+</footer>
+<!-- ================= END FOOTER ================= -->
+
+
+
+
+
+
+
+
+
+
+
+<script>
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("active");
+}
+</script>
+
+<script>
+let allItems = [];
+let currentFocus = -1;
+
+// Load all JSON data from multiple files
+async function loadData() {
+  try {
+    const jsonFiles = [
+      '/assets/json/digital.json',
+      '/assets/json/earning.json',
+      '/assets/json/finance.json'
+    ];
+
+    const responses = await Promise.all(
+      jsonFiles.map(path => fetch(path).then(res => res.json()))
+    );
+
+    // Merge all guides arrays into one
+    allItems = responses.flatMap(data => data.guides || []);
+
+  } catch (error) {
+    console.error("Error loading JSON data:", error);
+  }
+}
+
+// Search function
+function searchContent(query) {
+  query = query.toLowerCase();
+
+  return allItems.filter(item =>
+    (item.title && item.title.toLowerCase().includes(query)) ||
+    (item.thumb && item.thumb.toLowerCase().includes(query)) ||
+    (item.thumbnail && item.thumbnail.toLowerCase().includes(query)) ||
+    (item.link && item.link.toLowerCase().includes(query))
+  );
+}
+
+// Render search results
+function renderResults(results) {
+  const resultsContainer = document.getElementById('search-results');
+  resultsContainer.innerHTML = '';
+
+  if (!results.length) {
+    resultsContainer.innerHTML = '<p>No results found</p>';
+    return;
+  }
+
+  results.forEach(item => {
+    const thumb = item.thumb || item.thumbnail;
+    const link = item.link || "#";
+    const desc = item.subtitle || "";
+
+    const div = document.createElement('div');
+    div.classList.add('search-item');
+    div.innerHTML = `
+      <img src="${thumb}" alt="${item.title}" />
+      <div>
+        <h4>${item.title}</h4>
+        <p>${desc}</p>
+      </div>
+    `;
+
+    div.addEventListener('click', () => {
+      window.location.href = link;
+    });
+
+    resultsContainer.appendChild(div);
+  });
+}
+
+// Keyboard navigation
+function addKeyboardNavigation() {
+  const items = document.querySelectorAll('.search-item');
+  document.getElementById('universal-search').addEventListener('keydown', function(e) {
+    if (!items.length) return;
+
+    if (e.key === "ArrowDown") {
+      currentFocus++;
+      if (currentFocus >= items.length) currentFocus = 0;
+      setActive(items);
+    } else if (e.key === "ArrowUp") {
+      currentFocus--;
+      if (currentFocus < 0) currentFocus = items.length - 1;
+      setActive(items);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (currentFocus > -1) items[currentFocus].click();
+    }
+  });
+}
+
+function setActive(items) {
+  items.forEach(i => i.classList.remove('active'));
+  if (currentFocus >= 0) items[currentFocus].classList.add('active');
+}
+
+// Input listener
+document.getElementById('universal-search').addEventListener('input', (e) => {
+  const query = e.target.value.trim();
+  currentFocus = -1;
+
+  if (query.length > 0) {
+    const results = searchContent(query);
+    renderResults(results);
+    addKeyboardNavigation();
+  } else {
+    document.getElementById('search-results').innerHTML = '';
+  }
+});
+
+// Close dropdown if clicked outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-container')) {
+    document.getElementById('search-results').innerHTML = '';
+  }
+});
+
+// Load data on page load
+window.addEventListener('DOMContentLoaded', loadData);
+</script>
+
+
+
+
+<script>
+const container = document.getElementById("guidesContainer");
+
+function shuffleArray(arr) {
+    return arr.sort(() => Math.random() - 0.5);
+}
+
+function loadGuides(jsonPath) {
+    fetch(jsonPath)
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.guides || !Array.isArray(data.guides)) return;
+
+            const shuffledGuides = shuffleArray(data.guides);
+
+            shuffledGuides.forEach(guide => {
+
+                const item = `
+                    <a href="${guide.link}" class="guide-item">
+                        <div class="guide-thumb">
+                            <img src="${guide.thumbnail}" alt="${guide.title}">
+                        </div>
+
+                        <div class="guide-text">
+                            <h3>${guide.title}</h3>
+                            <p>${guide.subtitle}</p>
+                            <small>${guide.date}</small>
+                        </div>
+                    </a>
+                `;
+
+                container.innerHTML += item;
+            });
+        })
+        .catch(err => console.error("Fetch error:", jsonPath, err));
+}
+
+// MULTIPLE JSON FILES
+loadGuides("/assets/json/digital.json");
+
+</script>
+
+
+
+</body>
+</html>
