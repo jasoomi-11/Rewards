@@ -42,7 +42,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/fireba
 import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-/* Firebase config */
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
@@ -52,130 +52,90 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* Settings */
-const TASKS_JSON = "/assets/tasks.json"; 
-const COUNTDOWN = 10; 
+/* ================= SETTINGS ================= */
+const TASKS_JSON = "/assets/tasks.json";
 
 const tasksContainer = document.getElementById("tasks");
 const spinner = document.getElementById("spinner");
 
 let tasks = [];
-function today(){ return new Date().toISOString().slice(0,10); }
 
-// Load all task cards
-async function loadAllTasks(userData, userRef){
-  spinner.style.display="none";
+/* ================= SAFE CROSS-DOMAIN REDIRECT ================= */
+function redirectWithUID(rawLink, uid){
+  try {
+    let url = /^https?:\/\//i.test(rawLink) ? new URL(rawLink) : new URL(rawLink, window.location.origin);
+    url.searchParams.set("uid", uid);
+    window.location.href = url.toString();
+  } catch(e){
+    window.location.href = rawLink;
+  }
+}
 
-  tasks.forEach((task, index)=>{
+/* ================= LOAD TASKS ================= */
+async function renderTasks(userData, userRef){
+  spinner.style.display = "none";
+
+  tasks.forEach(task => {
     const card = document.createElement("div");
-    card.className="card";
+    card.className = "card";
 
     const title = document.createElement("h4");
     title.textContent = task.title;
 
-    const progressBar = document.createElement("div"); 
-    progressBar.className="progressBar";
-    const progress = document.createElement("div"); 
-    progress.className="progress";
-    progressBar.appendChild(progress);
-
-    const timer = document.createElement("div"); 
-    timer.className="timer";
-
     const btn = document.createElement("button");
 
-    // Already completed tasks
-    if(userData.usedtask?.includes(task.link)){
+    // Disable button if user already clicked this link
+    if(userData.usedtask.includes(task.link)){
       btn.disabled = true;
       btn.textContent = "✅ Completed";
       card.classList.add("completed");
-      timer.textContent = "Already clicked";
-      progress.style.width = "100%";
     } else {
-      btn.disabled = true; // initially disabled
-      btn.textContent = "Locked";
-      timer.textContent = "Locked";
+      btn.disabled = false;
+      btn.textContent = "Go to Task";
     }
 
-    card.append(title, progressBar, timer, btn);
+    card.append(title, btn);
     tasksContainer.appendChild(card);
 
-    task._elements = {btn, timer, progress}; // store elements for reference
+    // Button click handler
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = "Redirecting...";
+
+      // Only store link in usedtask
+      await updateDoc(userRef, {
+        usedtask: arrayUnion(task.link)
+      });
+
+      // Redirect to link with UID attached
+      redirectWithUID(task.link, auth.currentUser.uid);
+    };
   });
-
-  // Start the first available task countdown
-  startNextCountdown(userData, userRef, 0);
 }
 
-// Start countdown for the first unlocked/next task
-function startNextCountdown(userData, userRef, startIndex){
-  for(let i=startIndex;i<tasks.length;i++){
-    const task = tasks[i];
-    if(!userData.usedtask?.includes(task.link)){
-      startCountdown(task, userData, userRef, i);
-      break;
-    }
-  }
-}
-
-// Countdown + click
-function startCountdown(task, userData, userRef, index){
-  const {btn, timer, progress} = task._elements;
-  let sec = COUNTDOWN;
-  btn.disabled = true;
-  timer.textContent=`⏳ Available in ${sec}s`;
-  progress.style.width="0%";
-
-  const interval = setInterval(()=>{
-    sec--;
-    timer.textContent=`⏳ Available in ${sec}s`;
-    progress.style.width = `${((COUNTDOWN - sec)/COUNTDOWN)*100}%`;
-    if(sec<=0){
-      clearInterval(interval);
-      timer.textContent="✅ Click to continue";
-      btn.textContent="Go to Task";
-      btn.disabled=false;
-    }
-  },1000);
-
-  btn.onclick = async ()=>{
-    btn.disabled=true;
-    btn.textContent="Redirecting...";
-    progress.style.width="100%";
-
-    await updateDoc(userRef, { usedtask: arrayUnion(task.link) });
-
-    // Redirect with UID
-    const url = new URL(task.link, window.location.origin);
-    url.searchParams.set("uid", auth.currentUser.uid);
-    window.location.href = url.toString();
-
-    // After redirect user comes back, next task countdown automatically
-    const nextIndex = index + 1;
-    if(nextIndex<tasks.length){
-      startNextCountdown(userData, userRef, nextIndex);
-    }
-  };
-}
-
-// Auth check
-onAuthStateChanged(auth, async user=>{
-  if(!user) location.href="index.html";
+/* ================= AUTH CHECK ================= */
+onAuthStateChanged(auth, async user => {
+  if(!user) return location.href = "index.html";
 
   const userRef = doc(db,"users",user.uid);
   const snap = await getDoc(userRef);
-  let userData = snap.exists() ? snap.data() : { usedtask: [], tasksDate:"" };
+  let userData = snap.exists() ? snap.data() : { usedtask: [], tasksDate: "" };
 
-  if(userData.tasksDate!==today()){
-    await updateDoc(userRef,{ tasksDate: today(), usedtask: [] });
-    userData.usedtask=[];
+  // Daily reset of usedtask
+  const today = new Date().toISOString().slice(0,10);
+  if(userData.tasksDate !== today){
+    await updateDoc(userRef,{
+      tasksDate: today,
+      usedtask: []
+    });
+    userData.usedtask = [];
   }
 
-  // Fetch JSON
-  const res = await fetch(TASKS_JSON, {cache:"no-store"});
+  // Fetch tasks JSON
+  const res = await fetch(TASKS_JSON, { cache:"no-store" });
   tasks = await res.json();
 
-  loadAllTasks(userData, userRef);
+  renderTasks(userData, userRef);
 });
 </script>
 
