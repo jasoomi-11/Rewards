@@ -1,54 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Tasks</title>
-<style>
-body{margin:0;font-family:Segoe UI,sans-serif;background:linear-gradient(180deg,#0b1d61,#08123a);color:#fff;}
-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#0a184f;}
-header h2{color:#00aaff;}
-header button{border:none;padding:8px 14px;border-radius:8px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer;}
-.tasks{max-width:900px;margin:30px auto;padding:0 15px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;min-height:200px;position:relative;}
-.card{background:#1e40af;padding:16px;border-radius:12px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.4);}
-.card h4{margin:0 0 10px;}
-.timer{font-size:14px;margin-bottom:10px;color:#c7d2fe;}
-.progressBar{width:100%;height:6px;background:#94a3b8;border-radius:4px;overflow:hidden;margin-bottom:10px;}
-.progress{width:0%;height:100%;background:#22c55e;transition:width 1s linear;}
-.card button{width:100%;padding:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer;}
-.card button:disabled{background:#94a3b8;cursor:not-allowed;}
-.card.completed{background:#0f5132;}
-.note{max-width:900px;margin:20px auto;padding:15px;background:#0f172a;border-radius:12px;font-size:14px;color:#cbd5f5;}
-.spinner{border:6px solid #f3f3f3;border-top:6px solid #22c55e;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;position:absolute;left:50%;top:50%;transform:translate(-50%, -50%);}
-@keyframes spin{0%{transform:translate(-50%, -50%) rotate(0deg);}100%{transform:translate(-50%, -50%) rotate(360deg);}}
-</style>
-</head>
-<body>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>Daily Tasks</title>  
+<style>  
+body{margin:0;font-family:Segoe UI,sans-serif;background:linear-gradient(180deg,#0b1d61,#08123a);color:#fff;}  
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#0a184f;}  
+header h2{color:#00aaff;}  
+header button{border:none;padding:8px 14px;border-radius:8px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer;}  
+.tasks{max-width:900px;margin:30px auto;padding:0 15px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;min-height:200px;position:relative;}  
+.card{background:#1e40af;padding:16px;border-radius:12px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.4);}  
+.card h4{margin:0 0 10px;}  
+.timer{font-size:14px;margin-bottom:10px;color:#c7d2fe;}  
+.progressBar{width:100%;height:6px;background:#94a3b8;border-radius:4px;overflow:hidden;margin-bottom:10px;}  
+.progress{width:0%;height:100%;background:#22c55e;transition:width 1s linear;}  
+.card button{width:100%;padding:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer;}  
+.card button:disabled{background:#94a3b8;cursor:not-allowed;}  
+.card.completed{background:#0f5132;}  
+.note{max-width:900px;margin:20px auto;padding:15px;background:#0f172a;border-radius:12px;font-size:14px;color:#cbd5f5;}  
+.spinner{border:6px solid #f3f3f3;border-top:6px solid #22c55e;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;position:absolute;left:50%;top:50%;transform:translate(-50%, -50%);}  
+@keyframes spin{0%{transform:translate(-50%, -50%) rotate(0deg);}100%{transform:translate(-50%, -50%) rotate(360deg);}}  
+</style>  
+</head>  
+<body>  <header>  
+<h2>Daily Tasks</h2>  
+<div>  
+<button onclick="location.href='dashboard.html'">Back</button>  
+<button onclick="location.href='index.html'">Logout</button>  
+</div>  
+</header>  <div class="tasks" id="tasks">  
+<div class="spinner" id="spinner"></div>  
+</div>  <div class="note">  
+⏳ Countdown ke baad button enable hota hai.<br>  
+✔️ Click ke baad task disabled until next day.<br>  
+💰 Click ke baad redirect to real link from JSON.  
+</div> 
 
-<header>
-<h2>Daily Tasks</h2>
-<div>
-<button onclick="location.href='dashboard.html'">Back</button>
-<button onclick="location.href='index.html'">Logout</button>
-</div>
-</header>
-
-<div class="tasks" id="tasks">
-<div class="spinner" id="spinner"></div>
-</div>
-
-<div class="note">
-⏳ Countdown ke baad button enable hota hai.<br>
-✔️ Click ke baad task disabled until next day.<br>
-💰 Click ke baad redirect to real link from JSON.
-</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-/* FIREBASE CONFIG */
+/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
@@ -58,152 +52,139 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* SETTINGS */
-const TASKS_JSON = "/assets/tasks.json"; // JSON path
-const COUNTDOWN = 10; // 50 seconds countdown
-const DAILY_LIMIT = 120;
-const PLATFORM_EARNING = 0.0005;
+/* Settings */
+const TASKS_JSON = "/assets/tasks.json"; 
+const COUNTDOWN = 10; 
 
 const tasksContainer = document.getElementById("tasks");
 const spinner = document.getElementById("spinner");
 
-let cards = [];
-let currentIndex = 0;
+let tasks = [];
 function today(){ return new Date().toISOString().slice(0,10); }
 
-async function loadTasks(){
-  try{
-    const res = await fetch(TASKS_JSON, {cache:"no-store"});
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const tasks = await res.json();
-    spinner.style.display="none";
+// Load all task cards
+async function loadAllTasks(userData, userRef){
+  spinner.style.display="none";
 
-    const user = auth.currentUser;
-    const userRef = doc(db,"users",user.uid);
-    const snap = await getDoc(userRef);
-    let userData = snap.exists() ? snap.data() : { usedLinks: [], todayClicks:0, totalClicks:0, totalEarnings:0, tasksDate:"" };
+  tasks.forEach((task, index)=>{
+    const card = document.createElement("div");
+    card.className="card";
 
-    // reset daily data
-    if(userData.tasksDate!==today()){
-      await updateDoc(userRef,{
-        tasksDate: today(),
-        todayClicks:0,
-        usedLinks:[]
-      });
-      userData.todayClicks = 0;
-      userData.usedLinks = [];
+    const title = document.createElement("h4");
+    title.textContent = task.title;
+
+    const progressBar = document.createElement("div"); 
+    progressBar.className="progressBar";
+    const progress = document.createElement("div"); 
+    progress.className="progress";
+    progressBar.appendChild(progress);
+
+    const timer = document.createElement("div"); 
+    timer.className="timer";
+
+    const btn = document.createElement("button");
+
+    // Already completed tasks
+    if(userData.usedtask?.includes(task.link)){
+      btn.disabled = true;
+      btn.textContent = "✅ Completed";
+      card.classList.add("completed");
+      timer.textContent = "Already clicked";
+      progress.style.width = "100%";
+    } else {
+      btn.disabled = true; // initially disabled
+      btn.textContent = "Locked";
+      timer.textContent = "Locked";
     }
 
-    // check daily limit
-    if(userData.todayClicks>=DAILY_LIMIT){
-      tasksContainer.innerHTML="<div class='note'>❌ Daily limit reached. Come back tomorrow.</div>";
-      return;
+    card.append(title, progressBar, timer, btn);
+    tasksContainer.appendChild(card);
+
+    task._elements = {btn, timer, progress}; // store elements for reference
+  });
+
+  // Start the first available task countdown
+  startNextCountdown(userData, userRef, 0);
+}
+
+// Start countdown for the first unlocked/next task
+function startNextCountdown(userData, userRef, startIndex){
+  for(let i=startIndex;i<tasks.length;i++){
+    const task = tasks[i];
+    if(!userData.usedtask?.includes(task.link)){
+      startCountdown(task, userData, userRef, i);
+      break;
     }
-
-    // create cards
-    tasks.forEach(task=>{
-      const card = document.createElement("div");
-      card.className="card";
-
-      const title = document.createElement("h4");
-      title.textContent = task.title;
-
-      const progressBar = document.createElement("div");
-      progressBar.className = "progressBar";
-      const progress = document.createElement("div");
-      progress.className = "progress";
-      progressBar.appendChild(progress);
-
-      const timer = document.createElement("div");
-      timer.className="timer";
-
-      const btn = document.createElement("button");
-
-      if(userData.usedLinks?.includes(task.link)){
-        btn.disabled = true;
-        btn.textContent = "✅ Completed";
-        card.classList.add("completed");
-        timer.textContent = "Already clicked";
-        progress.style.width = "100%";
-      }else{
-        btn.disabled = true;
-        btn.textContent = "Locked";
-        timer.textContent = "Locked";
-      }
-
-      card.append(title, progressBar, timer, btn);
-      tasksContainer.appendChild(card);
-      cards.push({card,task,btn,timer,progress});
-    });
-
-    startNextCard();
-
-  }catch(err){
-    spinner.style.display="none";
-    tasksContainer.innerHTML="<div class='note'>Failed to load tasks.</div>";
-    console.error(err);
   }
 }
 
-function startCountdown(cardObj){
+// Countdown + click
+function startCountdown(task, userData, userRef, index){
+  const {btn, timer, progress} = task._elements;
   let sec = COUNTDOWN;
-  cardObj.timer.textContent=`⏳ Available in ${sec}s`;
-  cardObj.btn.disabled=true;
-  cardObj.progress.style.width = "0%";
+  btn.disabled = true;
+  timer.textContent=`⏳ Available in ${sec}s`;
+  progress.style.width="0%";
 
   const interval = setInterval(()=>{
     sec--;
-    cardObj.timer.textContent=`⏳ Available in ${sec}s`;
-    cardObj.progress.style.width = `${((COUNTDOWN - sec)/COUNTDOWN)*100}%`;
+    timer.textContent=`⏳ Available in ${sec}s`;
+    progress.style.width = `${((COUNTDOWN - sec)/COUNTDOWN)*100}%`;
     if(sec<=0){
       clearInterval(interval);
-      cardObj.timer.textContent="✅ Click to continue";
-      cardObj.btn.textContent="Go to Link";
-      cardObj.btn.disabled=false;
-      cardObj.progress.style.width = "100%";
+      timer.textContent="✅ Click to continue";
+      btn.textContent="Go to Task";
+      btn.disabled=false;
     }
   },1000);
 
-  cardObj.btn.onclick = async ()=>{
-    const user = auth.currentUser;
-    if(!user){ alert("User not logged in"); return; }
+  btn.onclick = async ()=>{
+    btn.disabled=true;
+    btn.textContent="Redirecting...";
+    progress.style.width="100%";
 
-    cardObj.btn.disabled = true;
-    cardObj.timer.textContent="Redirecting...";
-    cardObj.btn.textContent="Redirecting...";
+    await updateDoc(userRef, { usedtask: arrayUnion(task.link) });
 
-    const userRef = doc(db,"users",user.uid);
+    // Redirect with UID
+    const url = new URL(task.link, window.location.origin);
+    url.searchParams.set("uid", auth.currentUser.uid);
+    window.location.href = url.toString();
 
-    // store clicked URL separately + update clicks and earnings
-    await updateDoc(userRef,{
-      usedLinks: arrayUnion(cardObj.task.link),
-      todayClicks: increment(1),
-      totalClicks: increment(1),
-      totalEarnings: increment(PLATFORM_EARNING)
-    });
-
-    // redirect directly to the task link
-    window.location.href = cardObj.task.link;
+    // After redirect user comes back, next task countdown automatically
+    const nextIndex = index + 1;
+    if(nextIndex<tasks.length){
+      startNextCountdown(userData, userRef, nextIndex);
+    }
   };
 }
 
-function startNextCard(){
-  while(currentIndex<cards.length){
-    const c = cards[currentIndex];
-    if(!c.card.classList.contains("completed")){
-      startCountdown(c);
-      break;
-    }
-    currentIndex++;
-  }
-}
-
 // Auth check
-onAuthStateChanged(auth,user=>{
+onAuthStateChanged(auth, async user=>{
   if(!user) location.href="index.html";
-  else loadTasks();
+
+  const userRef = doc(db,"users",user.uid);
+  const snap = await getDoc(userRef);
+  let userData = snap.exists() ? snap.data() : { usedtask: [], tasksDate:"" };
+
+  if(userData.tasksDate!==today()){
+    await updateDoc(userRef,{ tasksDate: today(), usedtask: [] });
+    userData.usedtask=[];
+  }
+
+  // Fetch JSON
+  const res = await fetch(TASKS_JSON, {cache:"no-store"});
+  tasks = await res.json();
+
+  loadAllTasks(userData, userRef);
 });
 </script>
 
-</body>
-</html>
+
+
+
+
+
+
+
+</body>  
+</html>  

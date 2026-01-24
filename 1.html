@@ -446,38 +446,11 @@ body {
 
 
 
- <!-- Search Bar Container -->
-<div class="search-container">
-  <input type="text" id="universal-search" placeholder="Search Guides or games..." autocomplete="off"/>
-  <div id="search-results" class="search-results"></div>
-</div>
+ 
 
 
 
 
-
-
-
-
-<!-- ================= SIDEBAR ================= -->
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <br><h3 style="color: var(--text-light);">Boost💰 Your Finances</h3>
-        <div class="close-btn" onclick="toggleSidebar()">✖</div>
-    </div>
-
-    <div class="sidebar-section">
-        <a href="/">🏠 Home</a>
-        <a href="/earning/all.html">💸 Earning Guides</a>
-        <a href="/finance/all.html">💡 Finance Tips</a>
-        <a href="/digital/all.html">📲 Digital Wallets</a>
-        
-        <a href="/about.html">🌐 About Us</a>
-        <a href="/policies.html">📜 Privacy Policy</a>
-        <a href="/terms.html">⚖ Terms & Conditions</a>
-        <a href="/contact.html">📞 Contact</a>
-    </div>
-</div>
 
 
 
@@ -499,43 +472,72 @@ body {
 
 
 <div id="adContainer">
-  <div id="timer" class="waiting">⏳ Verifying...</div>
+  <button id="adBtn" disabled>Go to Link</button>
   <div id="progressBar">
     <div id="progress"></div>
   </div>
-  <button id="adBtn" disabled>Continue</button>
 </div>
 
 <style>
-#adContainer {
-  max-width:420px;
-  margin:50px auto;
-  padding:24px;
-  background:linear-gradient(135deg,#1e3a8a,#2563eb);
-  border-radius:18px;
-  box-shadow:0 15px 35px rgba(0,0,0,.45);
-  text-align:center;
-  font-family:Segoe UI,system-ui;
-  color:#fff;
-}
-#timer { font-size:18px; font-weight:600; margin-bottom:14px; color:#c7d2fe; }
-#progressBar { width:100%; height:8px; background:#94a3b8; border-radius:6px; overflow:hidden; margin-bottom:18px; }
-#progress { width:0%; height:100%; background:#22c55e; transition:width 1s linear; }
-#adBtn { width:100%; padding:14px; font-size:16px; font-weight:700; border:none; border-radius:14px; background:#22c55e; color:#000; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.35); transition:.3s; }
-#adBtn:hover:not(:disabled) { background:#16a34a; transform:translateY(-2px); }
-#adBtn:disabled { background:#94a3b8; cursor:not-allowed; }
-@keyframes pulse { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
-.waiting { animation:pulse 1s infinite; }
+  #adContainer {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.45);
+    text-align: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #fff;
+    position: relative;
+  }
+
+  #adBtn {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    border-radius: 14px;
+    background: #22c55e;
+    color: #000;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transition: all 0.3s ease;
+  }
+
+  #adBtn:hover:not(:disabled) {
+    background: #16a34a;
+    transform: translateY(-2px);
+  }
+
+  #adBtn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+  }
+
+  #progressBar {
+    width: 100%;
+    height: 6px;
+    background: #94a3b8;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  #progress {
+    width: 0%;
+    height: 100%;
+    background: #22c55e;
+    transition: width 0.5s ease;
+  }
 </style>
-
-
-
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore, doc, getDoc, updateDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-// FIREBASE CONFIG
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
@@ -544,122 +546,92 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// SETTINGS
-const COUNTDOWN = 5;
-const PLATFORM_EARNING = 0.0005;
-const DAILY_LIMIT = 120;
-const JSON_FILES = ["1.json","2.json","3.json"]; // your ad JSON files
+// Settings
+const JSON_FILES = ["1.json","2.json","3.json"];
+const DAILY_LIMIT = 20;
 
 // UI
 const btn = document.getElementById("adBtn");
-const timer = document.getElementById("timer");
 const progress = document.getElementById("progress");
 
-// Get params from URL
+// Get uid from URL (optional)
 const params = new URLSearchParams(window.location.search);
 const uid = params.get("uid");
-const clickedUrl = params.get("link"); // Page1 clicked URL
 
-if (!uid || !clickedUrl) {
-  btn.disabled = true;
-  timer.innerText = "❌ Invalid access";
-  throw new Error("Missing uid or link in URL");
-}
+// Track which JSON to use next
+let jsonIndex = 0;
 
-// Fetch next unused ad link from JSON
-async function getNextUnusedAd(userData) {
-  for (const file of JSON_FILES) {
+async function getUnusedLink(userData) {
+  for (let i = 0; i < JSON_FILES.length; i++) {
+    const file = JSON_FILES[jsonIndex];
+    jsonIndex = (jsonIndex + 1) % JSON_FILES.length; // round-robin
     try {
-      const res = await fetch(file, { cache: "no-store" });
+      const res = await fetch(file, {cache:"no-store"});
       if (!res.ok) continue;
-      const data = await res.json(); // assume JSON is array of URLs
-      const unused = data.filter(url => !userData.usedLinks?.includes(url));
-      if (unused.length) return unused[0]; // return first unused
-    } catch (e) {
-      console.error(e);
-    }
+      const data = await res.json();
+
+      if (userData && userData.usedLinks) {
+        const unused = data.filter(url => !userData.usedLinks.includes(url));
+        if (unused.length) return unused[0];
+      } else {
+        if (data.length) return data[0];
+      }
+    } catch(e){ console.error(e); }
   }
   return null;
 }
 
 async function init() {
-  btn.disabled = true;
-  timer.innerText = "⏳ Verifying...";
+  let userData = null;
+  let userRef = null;
 
-  const userRef = doc(db, "users", uid);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) {
-    timer.innerText = "❌ Unauthorized user";
-    return;
+  if (uid) {
+    userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) userData = snap.data();
   }
 
-  let userData = snap.data();
-  const todayStr = new Date().toISOString().slice(0,10);
+  // Get next unused link or last clicked link if fully used
+  const nextLink = await getUnusedLink(userData);
 
-  // Reset daily counters if new day
-  if (userData.tasksDate !== todayStr) {
-    await updateDoc(userRef, {
-      tasksDate: todayStr,
-      todayClicks: 0,
-      usedLinks: [],
-      lockedUntil: null
-    });
-    userData.todayClicks = 0;
-    userData.usedLinks = [];
-    userData.lockedUntil = null;
-  }
-
-  // Check if Page1 link already clicked
-  if (userData.usedLinks?.includes(clickedUrl)) {
+  if (userData && userData.usedLinks?.includes(nextLink)) {
     btn.disabled = true;
-    timer.innerText = "✅ Task already completed";
-    return;
+    btn.textContent = "✅ Completed";
+  } else {
+    btn.disabled = false;
+    btn.textContent = nextLink ? "Go to Link" : "Click to Open";
   }
 
-  // Check daily limit
-  if (userData.todayClicks >= DAILY_LIMIT) {
-    btn.disabled = true;
-    timer.innerText = "❌ Daily limit reached";
-    return;
-  }
-
-  // Get next unused ad link
-  const nextAd = await getNextUnusedAd(userData);
-  if (!nextAd) {
-    btn.disabled = true;
-    timer.innerText = "⚠️ No ad links available";
-    return;
-  }
-
-  // Start 5s countdown
-  let sec = COUNTDOWN;
-  progress.style.width = "0%";
-  timer.innerText = `⏳ Available in ${sec}s`;
-
-  const interval = setInterval(() => {
-    sec--;
-    timer.innerText = `⏳ Available in ${sec}s`;
-    progress.style.width = `${((COUNTDOWN - sec)/COUNTDOWN)*100}%`;
-    if (sec <= 0) {
-      clearInterval(interval);
-      timer.innerText = "✅ Click to continue";
-      btn.disabled = false;
-    }
-  }, 1000);
-
-  // Button click: store Page1 + Page2 link and earnings
   btn.onclick = async () => {
     btn.disabled = true;
-    timer.innerText = "Redirecting...";
+    btn.textContent = "✅ Completed";
+    progress.style.width = "100%";
 
-    await updateDoc(userRef, {
-      usedLinks: arrayUnion(clickedUrl, nextAd),
-      todayClicks: increment(1),
-      totalClicks: increment(1),
-      totalEarnings: increment(PLATFORM_EARNING)
-    });
+    if (uid && userData) {
+      const today = new Date().toISOString().slice(0,10);
+      // Reset daily if needed
+      if (userData.tasksDate !== today) {
+        await updateDoc(userRef, {
+          tasksDate: today,
+          todayClicks: 0,
+          usedLinks: []
+        });
+        userData.todayClicks = 0;
+        userData.usedLinks = [];
+      }
 
-    window.location.href = nextAd; // redirect to ad
+      // Only add click if under daily limit
+      if (userData.todayClicks < DAILY_LIMIT) {
+        await updateDoc(userRef, {
+          usedLinks: arrayUnion(nextLink),
+          todayClicks: increment(1),
+          totalClicks: increment(1)
+        });
+      }
+    }
+
+    // Open in new tab (legit click)
+    window.open(nextLink, "_blank");
   };
 }
 
