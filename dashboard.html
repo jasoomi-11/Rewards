@@ -7,40 +7,210 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
 body{background:linear-gradient(135deg,#0b1d61,#08123a);color:#fff;min-height:100vh;}
-header{display:flex;justify-content:space-between;align-items:center;padding:18px 25px;background:#0a184f;border-bottom:2px solid #00aaff;}
-.logout-btn{background:#ff4c4c;border:none;padding:10px 18px;border-radius:8px;color:#fff;cursor:pointer;}
-.logout-btn:hover{opacity:.9}
-.user-info{max-width:720px;margin:30px auto;background:#101e5a;padding:25px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.4);position:relative;}
-.user-info h2{text-align:center;color:#00aaff;margin-bottom:20px;}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
-.info-box{background:#1a2b8f;padding:15px;border-radius:12px;}
+
+/* Header container */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 25px;
+  background: #0a184f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Left - Logo */
+.header-left .logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #00aaff;
+}
+
+/* Right - User profile */
+.header-right .user-profile {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #00aaff;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background: #1a2b8f;
+  font-size: 22px;
+  text-decoration: none;
+  color: inherit;
+}
+.header-right .user-profile:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px #00aaff80;
+}
+
+/* Profile icon inside */
+.profile-icon {
+  display: inline-block;
+  line-height: 1;
+  user-select: none;
+}
+
+.section-title{
+  max-width:1000px;
+  margin:40px auto 10px auto;
+  font-size:22px;
+  color:#00e0ff;
+  text-shadow:0 0 6px #00aaff40;
+  padding-left:15px;
+}
+
+.cards-container{
+  max-width:1000px;
+  margin:10px auto 30px auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:20px;
+  padding:0 15px;
+}
+
+.user-info{
+  max-width:720px;
+  margin:30px auto;
+  background:#101e5a;
+  padding:25px;
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+  position:relative;
+}
+
+.user-info h2{
+  text-align:center;
+  color:#00aaff;
+  margin-bottom:20px;
+}
+
+.info-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+}
+
+.info-box{
+  background:#1a2b8f;
+  padding:15px;
+  border-radius:12px;
+}
+
 .info-box span{font-size:13px;opacity:.8;}
 .info-box strong{display:block;font-size:17px;margin-top:5px;}
+
 .highlight{background:linear-gradient(135deg,#00aaff,#0066ff);}
-.freeze{background:#ff4c4c;text-align:center;padding:14px;border-radius:12px;margin-top:20px;font-weight:bold;box-shadow:0 10px 25px rgba(0,0,0,.4);}
-.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;max-width:850px;margin:30px auto;padding:0 20px;}
-.card{background:linear-gradient(135deg,#1a2b8f,#243bba);padding:28px 20px;border-radius:18px;text-align:center;cursor:pointer;transition:.25s ease;box-shadow:0 15px 30px rgba(0,0,0,.35);font-size:17px;font-weight:600;text-decoration:none;color:#fff;position:relative;}
+
+.freeze{
+  background:#ff4c4c;
+  text-align:center;
+  padding:14px;
+  border-radius:12px;
+  margin-top:20px;
+  font-weight:bold;
+  box-shadow:0 10px 25px rgba(0,0,0,.4);
+}
+
+.cards-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:20px;
+  max-width:850px;
+  margin:30px auto;
+  padding:0 20px;
+}
+
+.card{
+  background:linear-gradient(135deg,#1a2b8f,#243bba);
+  padding:28px 20px;
+  border-radius:18px;
+  text-align:center;
+  cursor:pointer;
+  transition:.25s ease;
+  box-shadow:0 15px 30px rgba(0,0,0,.35);
+  font-size:17px;
+  font-weight:600;
+  text-decoration:none;
+  color:#fff;
+  position:relative;
+}
+
 .card:hover{transform:translateY(-6px);box-shadow:0 25px 45px rgba(0,0,0,.5);}
 .card:active{transform:scale(.96);}
 .card.disabled{opacity:.4;pointer-events:none;transform:none;box-shadow:none;}
-.spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;position:absolute;right:50%;top:50%;transform:translate(50%,-50%);}
-@keyframes spin{0%{transform:translate(50%,-50%) rotate(0deg);}100%{transform:translate(50%,-50%) rotate(360deg);}}
+
+.spinner{
+  border:4px solid rgba(255,255,255,0.3);
+  border-top:4px solid #fff;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  animation:spin 1s linear infinite;
+  position:absolute;
+  right:50%;
+  top:50%;
+  transform:translate(50%,-50%);
+}
+
+@keyframes spin{
+  0%{transform:translate(50%,-50%) rotate(0deg);}
+  100%{transform:translate(50%,-50%) rotate(360deg);}
+}
+
+/* Progress bar inside info-box for Level */
+.progress-bar{
+  width:100%;
+  height:12px;
+  background:rgba(255,255,255,0.2);
+  border-radius:8px;
+  overflow:hidden;
+  margin-top:6px;
+}
+.progress{
+  height:12px;
+  background:#00aaff;
+  width:0%;
+  border-radius:8px;
+  transition:width 1s;
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h2>Dashboard</h2>
-  <button class="logout-btn" id="logoutBtn">Logout</button>
+  <div class="header-left">
+    <img src="logo.png" alt="Logo" class="logo">
+  </div>
+  <div class="header-right">
+    <a href="profile.html" class="user-profile">
+      <span class="profile-icon">👤</span>
+    </a>
+  </div>
 </header>
 
+<!-- User Info -->
 <div class="user-info" id="userInfo" style="display:none;">
   <h2>User Info</h2>
   <div class="info-grid">
     <div class="info-box"><span>Name</span><strong id="name">-</strong></div>
     <div class="info-box"><span>Email</span><strong id="email">-</strong></div>
-    <div class="info-box highlight"><span>Total Earnings</span><strong id="earnings">$0.00</strong></div>
     <div class="info-box highlight"><span>Total Clicks</span><strong id="totalClicks">0</strong></div>
+    <div class="info-box highlight">
+      <span>Level</span>
+      <strong id="userLevel">1</strong>
+      <div class="progress-bar">
+        <div class="progress" id="levelProgress"></div>
+      </div>
+      <small id="nextLevelReq" style="display:block;margin-top:4px;font-size:12px;color:#00e0ff;"></small>
+    </div>
     <div class="info-box"><span>Withdraw</span><strong id="withdraw">$0.00</strong></div>
     <div class="info-box" style="grid-column:span 2"><span>Date Joined</span><strong id="joined">-</strong></div>
   </div>
@@ -50,11 +220,18 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 <!-- Loading Spinner -->
 <div id="loading"><div class="spinner"></div></div>
 
+<!-- Cards Row -->
 <div class="cards-row" id="cardsRow" style="display:none;">
   <a href="withdraw.html" class="card" id="withdrawCard">💸 Withdraw</a>
   <a href="rewards.html" class="card" id="rewardCard">🏆 Rewards</a>
   <a href="tasks.html" class="card" id="taskCard">📅 Weekly Tasks</a>
   <a href="notification.html" class="card" id="notificationCard">🔔 Notifications</a>
+  <a href="membership.html" class="card" id="membershipCard">💎 Membership</a>
+  <div class="card disabled" id="leaderboardCard">🥇 Leaderboard</div>
+  
+  
+  
+  
 </div>
 
 <script type="module">
@@ -62,7 +239,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/fireba
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-// ✅ Updated Firebase config
+// Firebase config (unchanged)
 const app = initializeApp({
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
@@ -75,7 +252,6 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ===== Prevent back after logout
 window.history.pushState(null,"",location.href);
 window.onpopstate = () => window.history.pushState(null,"",location.href);
 
@@ -84,38 +260,100 @@ onAuthStateChanged(auth, async user => {
 
   const ref = doc(db,"users",user.uid);
   const snap = await getDoc(ref);
-
   if(!snap.exists()) return location.replace("index.html");
 
   const data = snap.data();
 
-  // ===== Check account status
   if(data.account === "pending") return location.replace("approve.html");
   if(data.account !== "approved") return location.replace("index.html");
 
-  // ===== Show user data
   document.getElementById("loading").style.display = "none";
   document.getElementById("userInfo").style.display = "block";
   document.getElementById("cardsRow").style.display = "grid";
 
+  /* ================= USER INFO ================= */
   document.getElementById("name").textContent = data.name || "-";
   document.getElementById("email").textContent = data.email || "-";
-  document.getElementById("earnings").textContent = "$" + (data.totalEarnings || 0).toFixed(2);
-  document.getElementById("withdraw").textContent = "$" + (data.withdraw || 0).toFixed(2);
+
+  // ✅ TOTAL CLICKS CARD → totalClicks
   document.getElementById("totalClicks").textContent = data.totalClicks || 0;
-  document.getElementById("joined").textContent = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-";
+
+  document.getElementById("withdraw").textContent =
+    "$" + (data.withdraw || 0).toFixed(2);
+
+  document.getElementById("joined").textContent =
+    data.createdAt?.toDate ? data.createdAt.toDate().toLocaleString() : "-";
+
+  /* ================= LEVEL SYSTEM ================= */
+  // ✅ LEVELS → allTimeClicks
+  const totalLevelClicks = data.all || 0;
+  const levelsMap = data.levels || {};
+
+  const levelsArr = Object.entries(levelsMap)
+    .map(([k, v]) => ({ level: Number(k.replace("level","")), clicks: v }))
+    .sort((a,b) => a.clicks - b.clicks);
+
+  let currentLevel = 1;
+  let currentMin = 0;
+  let nextMin = levelsArr[0]?.clicks || 0;
+
+  for(let i = 0; i < levelsArr.length; i++){
+    if(totalLevelClicks >= levelsArr[i].clicks){
+      currentLevel = levelsArr[i].level;
+      currentMin = levelsArr[i].clicks;
+      nextMin = levelsArr[i + 1]?.clicks ?? levelsArr[i].clicks;
+    } else break;
+  }
+
+  document.getElementById("userLevel").textContent = currentLevel;
+
+  const progressPercent = Math.min(
+    ((totalLevelClicks - currentMin) / (nextMin - currentMin)) * 100,
+    100
+  );
+
+  document.getElementById("levelProgress").style.width = progressPercent + "%";
+
+  const nextLevelReq = document.getElementById("nextLevelReq");
+  if(nextLevelReq){
+    nextLevelReq.textContent =
+      `Clicks to Level ${currentLevel + 1}: ${Math.max(nextMin - totalLevelClicks, 0)}`;
+  }
+
+  /* ================= MEMBERSHIP ================= */
+  const leaderboardCard = document.getElementById("leaderboardCard");
+
+  if(data.membership === "active"){
+    leaderboardCard.classList.remove("disabled");
+    leaderboardCard.addEventListener("click", () => location.href="leaderboard.html");
+  } else {
+    leaderboardCard.classList.add("disabled");
+    leaderboardCard.addEventListener("click", () => {
+      const popup = document.createElement("div");
+      popup.textContent = "🥳 Leaderboard available only for Active Membership!";
+      popup.style.position = "fixed";
+      popup.style.top = "20px";
+      popup.style.left = "50%";
+      popup.style.transform = "translateX(-50%)";
+      popup.style.background = "#00aaff";
+      popup.style.color = "#fff";
+      popup.style.padding = "12px 20px";
+      popup.style.borderRadius = "10px";
+      popup.style.boxShadow = "0 4px 12px rgba(0,0,0,0.5)";
+      popup.style.zIndex = "999";
+      document.body.appendChild(popup);
+      setTimeout(()=> popup.remove(),7000);
+    });
+  }
 
   if(data.status === "frozen"){
     document.getElementById("freezeBox").style.display = "block";
-    document.querySelectorAll(".card").forEach(c => c.classList.add("disabled"));
+    document.querySelectorAll(".card").forEach(c=>c.classList.add("disabled"));
   }
 });
 
-// ===== Logout
-document.getElementById("logoutBtn").onclick = async () => {
-  await signOut(auth);
-  location.replace("index.html");
-};
+
 </script>
+
 </body>
 </html>

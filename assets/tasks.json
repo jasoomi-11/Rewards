@@ -1,8 +1,6 @@
 [
-  { "id": "task1", "title": "Watch Ad 1", "link": "/1.html" },
-  { "id": "task2", "title": "Watch Ad 2", "link": "1.html" }
- 
-  
-  
- 
+  {"title":"Task 1: Visit Website","badge":"New","link":"https://example.com/1"},
+  {"title":"Task 2: Watch Video","badge":"Hot","link":"https://example.com/2"},
+  {"title":"Task 3: Like Page","badge":"New","link":"https://example.com/3"},
+  {"title":"Task 4: Share Post","badge":"Hot","link":"https://example.com/4"}
 ]

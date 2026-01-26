@@ -1,150 +1,224 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Daily Tasks</title>  
-<style>  
-body{margin:0;font-family:Segoe UI,sans-serif;background:linear-gradient(180deg,#0b1d61,#08123a);color:#fff;}  
-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#0a184f;}  
-header h2{color:#00aaff;}  
-header button{border:none;padding:8px 14px;border-radius:8px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer;}  
-.tasks{max-width:900px;margin:30px auto;padding:0 15px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;min-height:200px;position:relative;}  
-.card{background:#1e40af;padding:16px;border-radius:12px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.4);}  
-.card h4{margin:0 0 10px;}  
-.timer{font-size:14px;margin-bottom:10px;color:#c7d2fe;}  
-.progressBar{width:100%;height:6px;background:#94a3b8;border-radius:4px;overflow:hidden;margin-bottom:10px;}  
-.progress{width:0%;height:100%;background:#22c55e;transition:width 1s linear;}  
-.card button{width:100%;padding:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer;}  
-.card button:disabled{background:#94a3b8;cursor:not-allowed;}  
-.card.completed{background:#0f5132;}  
-.note{max-width:900px;margin:20px auto;padding:15px;background:#0f172a;border-radius:12px;font-size:14px;color:#cbd5f5;}  
-.spinner{border:6px solid #f3f3f3;border-top:6px solid #22c55e;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;position:absolute;left:50%;top:50%;transform:translate(-50%, -50%);}  
-@keyframes spin{0%{transform:translate(-50%, -50%) rotate(0deg);}100%{transform:translate(-50%, -50%) rotate(360deg);}}  
-</style>  
-</head>  
-<body>  <header>  
-<h2>Daily Tasks</h2>  
-<div>  
-<button onclick="location.href='dashboard.html'">Back</button>  
-<button onclick="location.href='index.html'">Logout</button>  
-</div>  
-</header>  <div class="tasks" id="tasks">  
-<div class="spinner" id="spinner"></div>  
-</div>  <div class="note">  
-⏳ Countdown ke baad button enable hota hai.<br>  
-✔️ Click ke baad task disabled until next day.<br>  
-💰 Click ke baad redirect to real link from JSON.  
-</div> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Tasks</title>
+<style>
+body{margin:0;font-family:Segoe UI,sans-serif;background:linear-gradient(180deg,#0b1d61,#08123a);color:#fff;}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 25px;background:#0a184f;box-shadow:0 4px 12px rgba(0,0,0,0.4);position:sticky;top:0;z-index:100;}
+.header-left .logo{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #00aaff;}
+.header-right .user-profile{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #00aaff;cursor:pointer;transition:transform 0.3s, box-shadow 0.3s;background:#1a2b8f;font-size:22px;color:inherit;text-decoration:none;}
+.header-right .user-profile:hover{transform:scale(1.1);box-shadow:0 0 15px #00aaff80;}
+.tasks{max-width:900px;margin:30px auto;padding:0 15px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}
+.card{background:#1e40af;padding:16px;border-radius:12px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.4);position:relative;overflow:hidden;}
+.card h4{margin:0 0 10px;}
+.timer{font-size:14px;margin-bottom:10px;color:#c7d2fe;}
+.progressBar{width:100%;height:6px;background:#94a3b8;border-radius:4px;overflow:hidden;margin-bottom:10px;}
+.progress{width:0%;height:100%;background:#22c55e;transition:width 1s linear;}
+.card button{width:100%;padding:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer;}
+.card button:disabled{background:#94a3b8;cursor:not-allowed;}
+.card.completed{background:#0f5132;}
+.badge{position:absolute;top:10px;right:10px;background:#facc15;color:#000;font-weight:bold;font-size:12px;padding:3px 7px;border-radius:8px;}
+#spinnerOverlay{position:fixed;top:0;left:0;width:100%;height:100%;backdrop-filter:blur(5px);background:rgba(0,0,0,0.3);display:flex;justify-content:center;align-items:center;z-index:9999;display:none;}
+.spinner{border:6px solid #f3f3f3;border-top:6px solid #22c55e;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;}
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
 
+<header>
+  <div class="header-left">
+    <img src="logo.png" alt="Logo" class="logo">
+  </div>
+  <div class="header-right">
+    <a href="#" class="user-profile"><span class="profile-icon">👤</span></a>
+  </div>
+</header>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+<div class="tasks" id="tasks">
 
-/* ================= FIREBASE ================= */
+  <!-- Static Cards -->
+  <div class="card" data-link="https://blog.com/1">
+    <span class="badge">New</span>
+    <h4>Task 1: Visit Website</h4>
+    <div class="timer">Not started</div>
+    <div class="progressBar"><div class="progress"></div></div>
+    <button class="startBtn">Start</button>
+  </div>
+
+  <div class="card" data-link="https://example.com/2">
+    <span class="badge">Hot</span>
+    <h4>Task 2: Watch Video</h4>
+    <div class="timer">Not started</div>
+    <div class="progressBar"><div class="progress"></div></div>
+    <button class="startBtn">Start</button>
+  </div>
+
+  <div class="card" data-link="https://example.com/3">
+    <span class="badge">New</span>
+    <h4>Task 3: Like Page</h4>
+    <div class="timer">Not started</div>
+    <div class="progressBar"><div class="progress"></div></div>
+    <button class="startBtn">Start</button>
+  </div>
+
+  <div class="card" data-link="https://example.com/4">
+    <span class="badge">Hot</span>
+    <h4>Task 4: Share Post</h4>
+    <div class="timer">Not started</div>
+    <div class="progressBar"><div class="progress"></div></div>
+    <button class="startBtn">Start</button>
+  </div>
+
+</div>
+
+<div id="spinnerOverlay"><div class="spinner"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
   projectId: "rewards-b8f54"
 };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-/* ================= SETTINGS ================= */
-const TASKS_JSON = "/assets/tasks.json";
+const overlay = document.getElementById('spinnerOverlay');
+const cards = Array.from(document.querySelectorAll('.card')); // NodeList → Array
 
-const tasksContainer = document.getElementById("tasks");
-const spinner = document.getElementById("spinner");
+overlay.style.display = 'flex'; // show spinner while checking user
 
-let tasks = [];
+// ---------- AUTH & usedTasks check ----------
+auth.onAuthStateChanged(async user => {
+  if(!user){ window.location.href='index.html'; return; }
+  const uid = user.uid;
+  const userRef = db.collection('users').doc(uid);
+  const snap = await userRef.get();
+  let data;
 
-/* ================= SAFE CROSS-DOMAIN REDIRECT ================= */
-function redirectWithUID(rawLink, uid){
-  try {
-    let url = /^https?:\/\//i.test(rawLink) ? new URL(rawLink) : new URL(rawLink, window.location.origin);
-    url.searchParams.set("uid", uid);
-    window.location.href = url.toString();
-  } catch(e){
-    window.location.href = rawLink;
-  }
-}
-
-/* ================= LOAD TASKS ================= */
-async function renderTasks(userData, userRef){
-  spinner.style.display = "none";
-
-  tasks.forEach(task => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const title = document.createElement("h4");
-    title.textContent = task.title;
-
-    const btn = document.createElement("button");
-
-    // Disable button if user already clicked this link
-    if(userData.usedtask.includes(task.link)){
-      btn.disabled = true;
-      btn.textContent = "✅ Completed";
-      card.classList.add("completed");
-    } else {
-      btn.disabled = false;
-      btn.textContent = "Go to Task";
-    }
-
-    card.append(title, btn);
-    tasksContainer.appendChild(card);
-
-    // Button click handler
-    btn.onclick = async () => {
-      btn.disabled = true;
-      btn.textContent = "Redirecting...";
-
-      // Only store link in usedtask
-      await updateDoc(userRef, {
-        usedtask: arrayUnion(task.link)
-      });
-
-      // Redirect to link with UID attached
-      redirectWithUID(task.link, auth.currentUser.uid);
+  if(!snap.exists){
+    data = {
+      usedTasks: [],
+      all: 0,
+      totalClicks: 0,
+      weekClicks: 0,
+      tasksDate: new Date().toDateString(),
+      lastWeekReset: ''
     };
+    await userRef.set(data);
+  } else data = snap.data();
+
+  // ---------- DAILY reset ----------
+  const todayStr = new Date().toDateString();
+  if(data.tasksDate !== todayStr){
+    await userRef.update({ usedTasks: [], tasksDate: todayStr });
+    data.usedTasks = [];
+  }
+
+  // ---------- WEEKLY reset (Sunday) ----------
+  const isSunday = new Date().getDay() === 0;
+  if(isSunday && data.lastWeekReset !== todayStr){
+    await userRef.update({ weekClicks: 0, lastWeekReset: todayStr });
+    data.weekClicks = 0;
+  }
+
+  // Hide spinner after auth check
+  overlay.style.display = 'none';
+
+  // Remove already used tasks
+  let remainingCards = cards.filter(card => {
+    const link = card.dataset.link;
+    if(data.usedTasks && data.usedTasks.includes(link)){
+      card.remove(); // remove completed tasks
+      return false;
+    }
+    return true;
+  });
+
+  // Only first card is clickable
+  if(remainingCards.length > 0) {
+    const firstCard = remainingCards[0];
+    const firstBtn = firstCard.querySelector('button');
+    firstBtn.disabled = false; // unlock first task
+    attachCountdown(firstCard, uid, remainingCards);
+  }
+
+});
+
+// ---------- Countdown + Go + Store ----------
+function attachCountdown(card, uid, remainingCards) {
+  const btn = card.querySelector('button');
+  const timer = card.querySelector('.timer');
+  const prog = card.querySelector('.progress');
+  const link = card.dataset.link;
+
+  // prevent double click
+  if(card.dataset.started === 'true') return;
+  card.dataset.started = 'true';
+
+  btn.addEventListener('click', () => {
+    let sec = 15;
+    btn.disabled = true;
+    timer.textContent = `Wait ${sec}s`;
+    prog.style.width = '0%';
+
+    const interval = setInterval(() => {
+      sec--;
+      timer.textContent = `Wait ${sec}s`;
+      prog.style.width = `${((15 - sec)/15)*100}%`;
+
+      if(sec <= 0){
+        clearInterval(interval);
+        btn.textContent = 'Go';
+        btn.disabled = false;
+
+        btn.addEventListener('click', async function goHandler() {
+          btn.removeEventListener('click', goHandler);
+
+          // Show overlay while storing
+          overlay.style.display = 'flex';
+
+          // Update user's document
+          await db.collection('users').doc(uid).update({
+            usedTasks: firebase.firestore.FieldValue.arrayUnion(link),
+            all: firebase.firestore.FieldValue.increment(1),
+            totalClicks: firebase.firestore.FieldValue.increment(1),
+            weekClicks: firebase.firestore.FieldValue.increment(1)
+          });
+
+          // Hide overlay
+          overlay.style.display = 'none';
+
+          // Remove completed card
+          card.remove();
+
+          // Unlock next card in sequence
+          const index = remainingCards.indexOf(card);
+          if(index + 1 < remainingCards.length){
+            const nextCard = remainingCards[index + 1];
+            const nextBtn = nextCard.querySelector('button');
+            nextBtn.disabled = false;
+            attachCountdown(nextCard, uid, remainingCards);
+          }
+
+          // Redirect after a tiny delay
+          setTimeout(() => {
+            window.location.href = link;
+          }, 100);
+
+        });
+
+      }
+    }, 1000);
   });
 }
-
-/* ================= AUTH CHECK ================= */
-onAuthStateChanged(auth, async user => {
-  if(!user) return location.href = "index.html";
-
-  const userRef = doc(db,"users",user.uid);
-  const snap = await getDoc(userRef);
-  let userData = snap.exists() ? snap.data() : { usedtask: [], tasksDate: "" };
-
-  // Daily reset of usedtask
-  const today = new Date().toISOString().slice(0,10);
-  if(userData.tasksDate !== today){
-    await updateDoc(userRef,{
-      tasksDate: today,
-      usedtask: []
-    });
-    userData.usedtask = [];
-  }
-
-  // Fetch tasks JSON
-  const res = await fetch(TASKS_JSON, { cache:"no-store" });
-  tasks = await res.json();
-
-  renderTasks(userData, userRef);
-});
 </script>
 
-
-
-
-
-
-
-
-</body>  
-</html>  
+</body>
+</html>

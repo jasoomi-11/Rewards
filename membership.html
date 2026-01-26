@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP Membership</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body{background:linear-gradient(135deg,#0b1d61,#08123a);color:#fff;min-height:100vh;display:flex;flex-direction:column;}
+
+/* Header */
+header { display:flex; justify-content:space-between; align-items:center; padding:12px 25px; background:#0a184f; box-shadow:0 4px 12px rgba(0,0,0,0.4); position:sticky; top:0; z-index:100; }
+.header-left .logo { width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #00aaff; }
+
+/* Spinner */
+#loading { position:fixed; top:0; left:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:#08123a; z-index:999; }
+.spinner { border:5px solid rgba(255,255,255,0.3); border-top:5px solid #00aaff; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; }
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+/* Container */
+.membership-container { max-width:700px; margin:20px auto; display:flex; flex-direction:column; gap:20px; padding:0 15px; }
+
+/* Alert message */
+.alert-msg {
+  background:#00aaff; padding:15px 20px; border-radius:12px; text-align:left; font-size:16px; box-shadow:0 5px 15px rgba(0,0,0,0.4);
+}
+.alert-msg h2 { margin-bottom:10px; font-size:18px; color:#fff; }
+.alert-msg ul { margin-left:20px; margin-top:10px; }
+.alert-msg li { margin-bottom:6px; }
+
+/* Sub cards for fixed info */
+.sub-card { background:linear-gradient(135deg,#1a2b8f,#243bba); padding:15px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.4); display:flex; justify-content:space-between; align-items:center; font-size:16px; }
+.sub-card label { font-size:14px; opacity:0.8; }
+.sub-card input { background:transparent; border:none; color:#fff; font-weight:bold; text-align:right; pointer-events:none; width:50%; }
+
+/* Input fields for user info */
+.input-card { background:linear-gradient(135deg,#243bba,#1a2b8f); padding:15px; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.4); display:flex; flex-direction:column; gap:10px; }
+.input-card input { padding:10px; border-radius:10px; border:none; font-size:14px; }
+.input-card input::placeholder { color:#ddd; }
+
+/* Submit button */
+.submit-btn{ background:#ff4c4c; color:#fff; padding:14px; border:none; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; transition:.25s; }
+.submit-btn:hover{ background:#ff6666; }
+
+/* Footer */
+footer{ text-align:center; padding:15px 0; margin-top:auto; background:#0a184f; box-shadow:0 -4px 12px rgba(0,0,0,0.4); font-size:14px; color:#00e0ff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left"><img src="logo.png" alt="Logo" class="logo"></div>
+</header>
+
+<div id="loading"><div class="spinner"></div></div>
+
+<div class="membership-container" id="membershipContainer" style="display:none;">
+  
+  <!-- VIP Features -->
+  <div class="alert-msg">
+    <h2>💎 VIP Membership</h2>
+    <p>Pay 1000 PKR to unlock the following premium features:</p>
+    <ul>
+      <li>High Paying Clicks</li>
+      <li>Weekly Rewards Leaderboard</li>
+      <li>Fast Withdraw (10-30 min)</li>
+      <li>Extra Earnings Feature</li>
+      <li>Monthly 2000 Clicks Guarantee</li>
+    </ul>
+  </div>
+
+<div class="sub-card"><label>Deposit Via</label><input type="text" value="Easypaisa"></div>
+
+
+
+  <!-- Fixed Payment Info -->
+  <div class="sub-card"><label>Admin Name</label><input type="text" value="Salman Abdullah"></div>
+  
+  <div class="sub-card"><label>Number</label><input type="text" value="03350028407"></div>
+  <div class="sub-card"><label>Amount (PKR)</label><input type="text" value="1000"></div>
+
+  <!-- User Provided Info -->
+  <div class="input-card">
+    <input type="text" id="txtId" placeholder="Transaction ID (required)">
+    <input type="text" id="senderName" placeholder="Your Name (required)">
+    <input type="text" id="senderNumber" placeholder="Your Number (required)">
+  </div>
+
+  <button class="submit-btn" id="submitMembership">Submit Membership</button>
+</div>
+
+<footer>JEETO All rights reserved</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+// Firebase config
+const app = initializeApp({
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54",
+  storageBucket: "rewards-b8f54.appspot.com",
+  messagingSenderId: "588528777945",
+  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"
+});
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const loading = document.getElementById("loading");
+const container = document.getElementById("membershipContainer");
+const submitBtn = document.getElementById("submitMembership");
+
+onAuthStateChanged(auth, async user => {
+  if(!user) return location.replace("index.html");
+
+  const userRef = doc(db,"users",user.uid);
+  const snap = await getDoc(userRef);
+
+  if(snap.exists()) {
+    const data = snap.data();
+    // If membership active, redirect to member dashboard
+    if(data.membership === "active") {
+      location.replace("member-dashboard.html");
+      return;
+    }
+    // Show the form
+    loading.style.display = "none";
+    container.style.display = "flex";
+
+    // Pre-fill UID and email (hidden fields or can include in WhatsApp message)
+    const uid = user.uid;
+    const email = data.email || "";
+    
+    submitBtn.addEventListener("click", ()=>{
+      const txtId = document.getElementById("txtId").value.trim();
+      const senderName = document.getElementById("senderName").value.trim();
+      const senderNumber = document.getElementById("senderNumber").value.trim();
+
+      if(!txtId || !senderName || !senderNumber){
+        alert("Please fill all required fields!");
+        return;
+      }
+
+      // WhatsApp message
+      const adminNumber = "03350028407";
+      const message = `VIP Membership Request
+Admin: Salman Abdullah
+Number: 03350028407
+Amount: 1000 PKR
+
+---User Info---
+UID: ${uid}
+Email: ${email}
+Transaction ID: ${txtId}
+Sender Name: ${senderName}
+Sender Number: ${senderNumber}
+
+Please check the screenshots sent via WhatsApp.`;
+
+      const url = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
+      window.open(url,"_blank");
+    });
+  } else {
+    location.replace("index.html");
+  }
+});
+</script>
+</body>
+</html>

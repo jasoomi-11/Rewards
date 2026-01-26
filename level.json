@@ -1,0 +1,6 @@
+[
+  {"name":"Weekly Leaderboard","requirement":5,"amount":"Unlocked weekly","icon":"🏆"},
+  {"name":"High Paying Section","requirement":20,"amount":"Unlocked high pay","icon":"🚀"},
+  {"name":"Monthly Salary","requirement":35,"amount":"Unlocked monthly","icon":"💵"},
+  {"name":"Membership Bonus","requirement":50,"amount":"Unlocked membership","icon":"👑"}
+]

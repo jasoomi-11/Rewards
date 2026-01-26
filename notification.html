@@ -11,51 +11,77 @@ body {
     background: linear-gradient(135deg,#0b1d61,#08123a);
     color:#fff;
 }
-/* HEADER */
-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:18px 25px;
-    background:#0a184f;
-    border-bottom:2px solid #00aaff;
-}
-header h2 { font-size:26px; color:#00aaff; }
-header .btn-group button {
-    cursor:pointer;
-    border:none;
-    border-radius:10px;
-    padding:8px 18px;
-    background: linear-gradient(145deg,#1a2b8f,#2563eb);
-    color:#fff;
-    font-weight:bold;
-    transition:0.3s;
-    margin-left:10px;
-}
-header .btn-group button:hover { transform:translateY(-2px); }
 
-/* Spinner overlay */
+
+/* Header container */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 25px;
+  background: #0a184f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Left - Logo */
+.header-left .logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #00aaff;
+}
+
+/* Right - User profile */
+.header-right .user-profile {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #00aaff;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background: #1a2b8f;
+  font-size: 22px;
+  text-decoration: none; /* Remove underline for <a> */
+  color: inherit;
+}
+.header-right .user-profile:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px #00aaff80;
+}
+
+/* Profile icon inside */
+.profile-icon {
+  display: inline-block;
+  line-height: 1;
+  user-select: none;
+}
+
+
+
+
+
 .spinner-overlay {
-    position:fixed;
-    top:0; left:0; right:0; bottom:0;
+    position:fixed; top:0; left:0; right:0; bottom:0;
     background:rgba(0,0,0,0.5);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
-    backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:1000; backdrop-filter:blur(4px);
+    display:none;
 }
 .spinner {
     border:6px solid rgba(255,255,255,0.3);
     border-top:6px solid #fff;
     border-radius:50%;
-    width:50px;
-    height:50px;
+    width:50px; height:50px;
     animation: spin 1s linear infinite;
 }
 @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-
-/* Notifications container */
 .notifications-container {
     max-width:800px;
     margin:30px auto;
@@ -64,8 +90,6 @@ header .btn-group button:hover { transform:translateY(-2px); }
     flex-direction:column;
     gap:20px;
 }
-
-/* Section box */
 .section-box {
     background: linear-gradient(145deg,#1a2b8f,#243bba);
     padding:20px;
@@ -76,8 +100,6 @@ header .btn-group button:hover { transform:translateY(-2px); }
     margin-bottom:15px;
     color:#00aaff;
 }
-
-/* Table style */
 .table {
     width:100%;
     border-collapse:collapse;
@@ -89,12 +111,8 @@ header .btn-group button:hover { transform:translateY(-2px); }
     border-bottom:1px solid rgba(255,255,255,0.2);
 }
 .table th { color:#9ec1ff; }
-
-/* Withdraw status colors */
 .status-pending { color:#facc15; font-weight:bold; }
 .status-approved { color:#22c55e; font-weight:bold; }
-
-/* Freeze */
 .freeze{
     background:#ff4c4c;
     text-align:center;
@@ -109,57 +127,54 @@ header .btn-group button:hover { transform:translateY(-2px); }
 <body>
 
 <header>
-    <h2>Notifications</h2>
-    <div class="btn-group">
-        <button onclick="location.href='dashboard.html'">Back</button>
-        <button onclick="logout()">Logout</button>
-    </div>
+  <div class="header-left">
+    <img src="logo.png" alt="Logo" class="logo">
+  </div>
+  <div class="header-right">
+    <a href="profile.html" class="user-profile">
+      <span class="profile-icon">👤</span>
+    </a>
+  </div>
 </header>
 
 <div id="freezeBox" class="freeze" style="display:none">
     ⚠ Account Frozen – Multiple Devices Detected
 </div>
 
-<!-- Spinner -->
 <div class="spinner-overlay" id="spinnerOverlay">
     <div class="spinner"></div>
 </div>
 
 <div class="notifications-container" id="notificationsContainer">
+
     <!-- Withdrawals -->
     <div class="section-box" id="withdrawSection">
         <h3>Withdrawals</h3>
         <table class="table" id="withdrawTable">
-            <tr><th>Amount</th><th>Status</th><th>Date</th></tr>
+            <tr><th>Amount</th><th>Status</th><th>Method</th><th>Date</th></tr>
         </table>
     </div>
 
-    <!-- Weekly Tasks -->
-    <div class="section-box" id="tasksSection">
-        <h3>Weekly Tasks Record</h3>
-        <table class="table" id="tasksTable">
-            <tr><th>Day</th><th>Clicks</th><th>Last Click</th></tr>
+    <!-- Recent Activity (Fake) -->
+    <div class="section-box" id="recentSection">
+        <h3>Recent Withdrawals (Recent Users)</h3>
+        <table class="table" id="recentTable">
+            <tr><th>User</th><th>Amount</th><th>Method</th></tr>
         </table>
     </div>
 
-    <!-- Earnings -->
-    <div class="section-box" id="earningsSection">
-        <h3>Earnings</h3>
-        <p>Total Earnings: $<span id="totalEarnings">0.00</span></p>
-        <p>Withdrawn: $<span id="withdrawnAmount">0.00</span></p>
-    </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, query, where, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // Firebase config
 const firebaseConfig = {
-    apiKey:"AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
-    authDomain:"rewards-6b903.firebaseapp.com",
-    projectId:"rewards-6b903"
+    apiKey:"AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+    authDomain:"rewards-b8f54.firebaseapp.com",
+    projectId:"rewards-b8f54"
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -169,79 +184,62 @@ const spinnerOverlay = document.getElementById('spinnerOverlay');
 const freezeBox = document.getElementById('freezeBox');
 
 function showSpinner(show){ spinnerOverlay.style.display = show?'flex':'none'; }
-function getDeviceHash(){
-    const raw=[navigator.userAgent,navigator.language,navigator.platform,screen.width+"x"+screen.height,Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
-    let hash=0; for(let i=0;i<raw.length;i++){ hash=((hash<<5)-hash)+raw.charCodeAt(i); hash|=0; }
-    return "fp_"+Math.abs(hash);
+function logout(){ signOut(auth); location.href='index.html'; }
+
+function randomRecentWithdrawals(){
+    const fakeUsers = ["Uzma","Ali","Sara","Hassan","salman","Ayesha","Abdullah","kashif","Riaz"];
+    const fakeAmounts = [500,1000,1500,2000];
+    const methods = ["Jazzcash","Easypaisa","Sadapay"];
+    const table = document.getElementById("recentTable");
+    table.innerHTML = `<tr><th>User</th><th>Amount</th><th>Method</th></tr>`;
+    for(let i=0;i<5;i++){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${fakeUsers[Math.floor(Math.random()*fakeUsers.length)]}</td>
+                        <td>$${fakeAmounts[Math.floor(Math.random()*fakeAmounts.length)]}</td>
+                        <td>${methods[Math.floor(Math.random()*methods.length)]}</td>`;
+        table.appendChild(tr);
+    }
 }
 
 onAuthStateChanged(auth, async user=>{
     if(!user){ location.href='index.html'; return; }
     showSpinner(true);
+
     try{
-        const userDocRef = doc(db,"users",user.uid);
-        const userSnap = await getDoc(userDocRef);
-        if(!userSnap.exists()){ await signOut(auth); location.href='index.html'; return; }
-        const data = userSnap.data();
-        const currentHash = getDeviceHash();
-        const isFlagged = data.status==='flagged' || (data.deviceHash && data.deviceHash!==currentHash);
-        if(isFlagged){ freezeBox.style.display='block'; }
-
-        // Earnings
-        document.getElementById('totalEarnings').textContent = (data.totalEarnings||0).toFixed(2);
-        document.getElementById('withdrawnAmount').textContent = (data.withdraw||0).toFixed(2);
-
-        // Withdrawals
-        const withdrawRef = collection(db,"users",user.uid,"withdrawals");
-        const withdrawQuery = query(withdrawRef, orderBy("createdAt","desc"));
+        const withdrawRef = collection(db, "withdrawals");
+        const withdrawQuery = query(withdrawRef, where("uid","==",user.uid));
         const withdrawSnap = await getDocs(withdrawQuery);
+
         const withdrawTable = document.getElementById('withdrawTable');
+        withdrawTable.innerHTML = `<tr><th>Amount</th><th>Status</th><th>Method</th><th>Date</th></tr>`; // reset table
+
         if(withdrawSnap.empty){
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td colspan="3">No withdrawals found</td>`;
+            tr.innerHTML = `<td colspan="4">No withdrawals found</td>`;
             withdrawTable.appendChild(tr);
         } else {
             withdrawSnap.forEach(doc=>{
                 const w = doc.data();
                 const dateStr = w.createdAt instanceof Timestamp ? w.createdAt.toDate().toLocaleString() : '-';
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>$${(w.amount||0).toFixed(2)}</td>
-                                <td class="${w.status==='approved'?'status-approved':'status-pending'}">${w.status||'pending'}</td>
+                tr.innerHTML = `<td>$${w.amount ?? 0}</td>
+                                <td class="${w.status==='approved'?'status-approved':'status-pending'}">${w.status??'pending'}</td>
+                                <td>${w.method ?? '-'}</td>
                                 <td>${dateStr}</td>`;
                 withdrawTable.appendChild(tr);
             });
         }
 
-        // Weekly Tasks
-        const tasksRef = collection(db,"users",user.uid,"weeklyTasks");
-        const tasksQuery = query(tasksRef, orderBy("__name__"));
-        const tasksSnap = await getDocs(tasksQuery);
-        const tasksTable = document.getElementById('tasksTable');
-        if(tasksSnap.empty){
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td colspan="3">No task records found</td>`;
-            tasksTable.appendChild(tr);
-        } else {
-            tasksSnap.forEach(doc=>{
-                const t = doc.data();
-                const lastClickStr = t.lastClick instanceof Timestamp ? t.lastClick.toDate().toLocaleString() : '-';
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${doc.id}</td>
-                                <td>${t.clicks||0}/20</td>
-                                <td>${lastClickStr}</td>`;
-                tasksTable.appendChild(tr);
-            });
-        }
+        // Show fake recent withdrawals
+        randomRecentWithdrawals();
 
     } catch(err){
         console.error(err);
-        alert("Error fetching data. Please try again later.");
+        alert("Error fetching withdrawal data.");
     } finally {
         showSpinner(false);
     }
 });
-
-function logout(){ signOut(auth); location.href='index.html'; }
 </script>
 
 </body>

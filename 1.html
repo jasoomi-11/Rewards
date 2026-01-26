@@ -472,7 +472,79 @@ body {
 
 
 
+<div id="adContainer">
+  <button class="adBtn" data-link="https://shrtslug.biz/8CMFy">Go to Link</button>
+</div>
 
+<style>
+#adContainer {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 30px;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.45);
+  text-align: center;
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+}
+
+.adBtn {
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  background: #22c55e;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  transition: all 0.3s ease;
+}
+
+.adBtn:hover:not(:disabled) {
+  background: #16a34a;
+  transform: translateY(-2px);
+}
+
+.adBtn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const btns = document.querySelectorAll(".adBtn");
+
+  btns.forEach(btn => {
+    const link = btn.dataset.link;
+    const today = new Date().toISOString().slice(0,10);
+    const key = `clicked_${link}`; // localStorage key
+    const clickedData = JSON.parse(localStorage.getItem(key) || '{}');
+
+    // Disable button if clicked today
+    if(clickedData.date === today){
+      btn.disabled = true;
+      btn.textContent = "✅ Already Clicked";
+    }
+
+    btn.addEventListener("click", () => {
+      btn.disabled = true;
+      btn.textContent = "Redirecting...";
+
+      // Store in localStorage
+      localStorage.setItem(key, JSON.stringify({ date: today }));
+
+      // Small delay to show text
+      setTimeout(() => {
+        window.location.href = link;
+      }, 100); // 0.1 second
+    });
+  });
+});
+</script>
 
 
 

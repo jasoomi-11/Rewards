@@ -3,175 +3,282 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rewards</title>
+<title>Rewards Dashboard</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
-body{background:linear-gradient(135deg,#0b1d61,#08123a);color:#fff;min-height:100vh;}
-header{display:flex;justify-content:space-between;align-items:center;padding:18px 25px;background:#0a184f;border-bottom:2px solid #00aaff;}
-.header-btn{background:#2563eb;border:none;padding:10px 18px;border-radius:8px;color:#fff;cursor:pointer;margin-left:10px;}
-.header-btn:hover{opacity:.9;}
-.user-info{max-width:720px;margin:30px auto;background:#101e5a;padding:25px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.4);}
-.user-info h2{text-align:center;color:#00aaff;margin-bottom:20px;}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
-.info-box{background:#1a2b8f;padding:15px;border-radius:12px;}
-.info-box span{font-size:13px;opacity:.8;}
-.info-box strong{display:block;font-size:17px;margin-top:5px;}
-.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;max-width:850px;margin:30px auto;padding:0 20px;}
-.card{background:linear-gradient(135deg,#1a2b8f,#243bba);padding:28px 20px;border-radius:18px;text-align:center;cursor:pointer;transition:.25s ease;box-shadow:0 15px 30px rgba(0,0,0,.35);font-size:17px;font-weight:600;text-decoration:none;color:#fff;position:relative;}
-.card:hover{transform:translateY(-6px);box-shadow:0 25px 45px rgba(0,0,0,.5);}
-.card:active{transform:scale(.96);}
-.card.disabled{opacity:.6;pointer-events:none;transform:none;box-shadow:none;}
-.freeze{background:#ff4c4c;text-align:center;padding:14px;border-radius:12px;margin-top:20px;font-weight:bold;box-shadow:0 10px 25px rgba(0,0,0,.4);}
-.spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:20px;height:20px;animation:spin 1s linear infinite;position:absolute;right:15px;top:50%;transform:translateY(-50%);}
-@keyframes spin{0%{transform:translateY(-50%) rotate(0deg);}100%{transform:translateY(-50%) rotate(360deg);}}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#0b1d61,#08123a);
+  color:#fff;
+  min-height:100vh;
+}
+
+/* Header container */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 25px;
+  background: #0a184f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Left - Logo */
+.header-left .logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #00aaff;
+}
+
+/* Right - User profile */
+.header-right .user-profile {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #00aaff;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background: #1a2b8f;
+  font-size: 22px;
+  text-decoration: none; /* Remove underline for <a> */
+  color: inherit;
+}
+.header-right .user-profile:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px #00aaff80;
+}
+
+/* Profile icon inside */
+.profile-icon {
+  display: inline-block;
+  line-height: 1;
+  user-select: none;
+}
+.section-title{
+  max-width:1000px;
+  margin:40px auto 10px auto;
+  font-size:22px;
+  color:#00e0ff;
+  text-shadow:0 0 6px #00aaff40;
+  padding-left:15px;
+}
+.cards-container{
+  max-width:1000px;
+  margin:10px auto 30px auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:20px;
+  padding:0 15px;
+}
+
+/* Card styles */
+.card{
+  background:linear-gradient(145deg,#1a2b8f,#243bba);
+  padding:25px 20px;
+  border-radius:20px;
+  text-align:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.5);
+  font-weight:700;
+  color:#fff;
+  cursor:not-allowed;
+  position:relative;
+  overflow:hidden;
+  transition:transform 0.3s, box-shadow 0.3s;
+}
+.card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 20px 40px rgba(0,0,0,0.6);
+}
+.card h3{
+  font-size:20px;
+  margin-bottom:12px;
+  color:#00e0ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.card p{
+  font-size:14px;
+  margin-bottom:12px;
+  color:#b0d4ff;
+}
+
+/* Progress bar */
+.progress-bar{
+  width:100%;
+  height:14px;
+  background:rgba(255,255,255,0.15);
+  border-radius:10px;
+  overflow:hidden;
+  margin-bottom:8px;
+}
+.progress{
+  height:14px;
+  background:linear-gradient(90deg,#00e0ff,#00aaff);
+  width:0%;
+  border-radius:10px;
+  transition:width 1s ease-in-out;
+}
+
+/* Level/Click label */
+.level-label{
+  font-size:13px;
+  margin-top:4px;
+  opacity:0.85;
+  color:#fff;
+  font-weight:500;
+  text-shadow:0 0 4px #0003;
+}
+
+/* Emoji effects */
+.unlocked::before{
+  content:'🎉 ';
+}
+.locked::before{
+  content:'🔒 ';
+}
 </style>
 </head>
 <body>
 
+
 <header>
-  <h2>Rewards</h2>
-  <div>
-    <button class="header-btn" onclick="location.href='dashboard.html'">Home</button>
-    <button class="header-btn" id="logoutBtn">Logout</button>
+  <div class="header-left">
+    <img src="logo.png" alt="Logo" class="logo">
+  </div>
+  <div class="header-right">
+    <a href="profile.html" class="user-profile">
+      <span class="profile-icon">👤</span>
+    </a>
   </div>
 </header>
 
-<div class="user-info" id="userInfo" style="display:none;">
-  <h2>User Info</h2>
-  <div class="info-grid">
-    <div class="info-box"><span>Name</span><strong id="name">-</strong></div>
-    <div class="info-box"><span>Email</span><strong id="email">-</strong></div>
-    <div class="info-box highlight"><span>Total Clicks</span><strong id="totalClicks">0</strong></div>
-    <div class="info-box highlight"><span>Total Earnings</span><strong id="earnings">$0.00</strong></div>
-  </div>
-  <div id="freezeBox" class="freeze" style="display:none">⚠ Account Frozen – Multiple Devices Detected</div>
+<a href="dashboard.html" 
+   style="display:inline-block;
+          padding:10px 20px;
+          background: linear-gradient(135deg,#00aaff,#0056cc);
+          color:#fff;
+          font-weight:600;
+          border-radius:18px;
+          text-decoration:none;
+          box-shadow:0 6px 15px rgba(0,0,0,0.3);
+          transition: all 0.3s;
+          font-family:'Segoe UI',sans-serif;">
+  ⬅ Back
+</a>
+
+<div style="max-width:1000px;margin:30px auto;padding:30px 20px;border-radius:20px;background:linear-gradient(135deg,#1a2b8f,#243bba);box-shadow:0 15px 30px rgba(0,0,0,0.5);color:#fff;text-align:center;">
+  <h1 style="font-size:28px;color:#00e0ff;margin-bottom:15px;text-shadow:0 0 6px #00aaff50;">🎯 Welcome to Rewards Dashboard!</h1>
+  <p style="font-size:16px;line-height:1.6;color:#cce0ff;margin-bottom:20px;">
+    Here you can track your progress, unlock amazing rewards based on your clicks and levels, and claim your bonuses. 
+    Earn more to unlock higher tier rewards and exclusive membership benefits. Stay active and maximize your rewards!
+  </p>
+  <a href="rule.html" style="display:inline-block;margin-top:10px;padding:12px 25px;background:#00aaff;color:#fff;font-weight:600;border-radius:12px;text-decoration:none;transition:all 0.3s;">
+    📖 View Full Details
+  </a>
 </div>
 
-<!-- Spinner -->
-<div id="loading" style="display:flex;justify-content:center;align-items:center;height:60vh;">
-  <div class="spinner"></div>
+
+
+
+<div class="section-title">Click Rewards</div>
+<div class="cards-container" id="clickRewardsContainer">
+  <!-- Click-based rewards loaded here -->
 </div>
 
-<div class="cards-row" id="cardsRow" style="display:none;">
-  <div class="card" id="reward1">🎁 Reward 1 ($0.5) - 100 Clicks</div>
-  <div class="card" id="reward2">🎁 Reward 2 ($1.0) - 300 Clicks</div>
-  <div class="card" id="reward3">🎁 Reward 3 ($1.5) - 500 Clicks</div>
+<div class="section-title">Level Rewards</div>
+<div class="cards-container" id="levelRewardsContainer">
+  <!-- Level-based rewards loaded here -->
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-
-const app = initializeApp({
-  apiKey: "AIzaSyC536HkcJeBwXuLWzv-e2xl6au6_KeQp5s",
-  authDomain: "rewards-6b903.firebaseapp.com",
-  projectId: "rewards-6b903"
-});
-
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// ===== Fingerprint
-function getFingerprint(){
-  return {
-    ua:navigator.userAgent,
-    platform:navigator.platform,
-    lang:navigator.language,
-    screen:screen.width+"x"+screen.height,
-    tz:Intl.DateTimeFormat().resolvedOptions().timeZone,
-    cpu:navigator.hardwareConcurrency||"na",
-    ram:navigator.deviceMemory||"na"
-  };
-}
-
-// ===== Score match
-function scoreMatch(a,b){
-  let s=0;
-  if(a.platform===b.platform)s+=20;
-  if(a.screen===b.screen)s+=20;
-  if(a.tz===b.tz)s+=20;
-  if(a.cpu===b.cpu && a.ram===b.ram)s+=20;
-  if(a.lang===b.lang)s+=20;
-  return s;
-}
-
-// ===== Prevent back
-window.history.pushState(null,"",location.href);
-window.onpopstate=()=>window.history.pushState(null,"",location.href);
-
-// ===== Auth check
-onAuthStateChanged(auth, async user=>{
-  if(!user) return location.replace("index.html");
-
-  const ref = doc(db,"users",user.uid);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return location.replace("index.html");
-
-  const data = snap.data();
-  const fp = getFingerprint();
-  const updates = {};
-  if(!data.deviceFingerprint) updates.deviceFingerprint=fp;
-  if(!data.totalClicks) updates.totalClicks=0;
-  if(!data.totalEarnings) updates.totalEarnings=0;
-  if(Object.keys(updates).length) await updateDoc(ref,updates);
-
-  // ===== Freeze check
-  let freeze=false;
-  if(data.deviceFingerprint){
-    if(scoreMatch(data.deviceFingerprint,fp)<80){
-      freeze=true;
-      await updateDoc(ref,{status:"frozen"});
-    }
-  }
-
-  // ===== Populate UI
-  document.getElementById("loading").style.display="none";
-  document.getElementById("userInfo").style.display="block";
-  document.getElementById("cardsRow").style.display="grid";
-
-  document.getElementById("name").textContent=data.name||"-";
-  document.getElementById("email").textContent=data.email||"-";
-  document.getElementById("totalClicks").textContent=data.totalClicks||0;
-  document.getElementById("earnings").textContent="$"+(data.totalEarnings||0).toFixed(2);
-
-  // ===== Rewards unlock
-  const rewards=[{id:"reward1",clicks:100,amt:0.5},
-                 {id:"reward2",clicks:300,amt:1},
-                 {id:"reward3",clicks:500,amt:1.5}];
-
-  for(const r of rewards){
-    const el=document.getElementById(r.id);
-    if((data.totalClicks||0)>=r.clicks){
-      el.classList.remove("disabled");
-      el.onclick=async ()=>{
-        // Add earnings only once
-        if(!el.dataset.claimed){
-          const newTotal=data.totalEarnings+r.amt;
-          await updateDoc(ref,{totalEarnings:newTotal});
-          el.dataset.claimed=true;
-          el.textContent=`🎁 ${r.id.toUpperCase()} Claimed! +$${r.amt}`;
-          document.getElementById("earnings").textContent="$"+newTotal.toFixed(2);
-        }
-      };
-    }else{
-      el.classList.add("disabled");
-      el.onclick=e=>e.preventDefault();
-    }
-  }
-
-  // ===== Freeze UI
-  if(freeze || data.status==="frozen"){
-    document.getElementById("freezeBox").style.display="block";
-    document.querySelectorAll(".card").forEach(c=>c.classList.add("disabled"));
-  }
-});
-
-// ===== Logout
-document.getElementById("logoutBtn").onclick=async()=>{
-  await signOut(auth);
-  location.replace("index.html");
+// ===== Mock user data =====
+const user = {
+  totalClicks: 12000,
+  level: 6
 };
+
+// ===== Fetch JSON rewards =====
+async function loadRewards(){
+  try{
+    // Click-based rewards
+    const clickRes = await fetch('clicks.json');
+    const clickRewards = await clickRes.json();
+    renderRewards(clickRewards,'clicks','clickRewardsContainer');
+
+    // Level-based rewards
+    const levelRes = await fetch('level.json');
+    const levelRewards = await levelRes.json();
+    renderRewards(levelRewards,'level','levelRewardsContainer');
+
+    // Animate progress bars
+    setTimeout(()=>{
+      document.querySelectorAll('.progress').forEach(p=>{
+        p.style.transition='width 1.5s ease-in-out';
+      });
+    },100);
+
+  } catch(err){
+    console.error("Error loading rewards:",err);
+  }
+}
+
+// ===== Render function =====
+function renderRewards(rewards,type,containerId){
+  const container = document.getElementById(containerId);
+  rewards.forEach(r=>{
+    const card = document.createElement("div");
+    card.classList.add("card");
+
+    const title = document.createElement("h3");
+    title.textContent = `${r.icon} ${r.name}`;
+
+    const desc = document.createElement("p");
+    desc.textContent = r.amount;
+
+    const progressBar = document.createElement("div");
+    progressBar.classList.add("progress-bar");
+    const progress = document.createElement("div");
+    progress.classList.add("progress");
+    
+    let percent = 0;
+    if(type==='clicks') percent = Math.min((user.totalClicks/r.requirement)*100,100);
+    else percent = Math.min((user.level/r.requirement)*100,100);
+    progress.style.width = percent+"%";
+
+    progressBar.appendChild(progress);
+
+    const label = document.createElement("div");
+    label.classList.add("level-label");
+    if(percent>=100){
+      label.textContent="Unlocked";
+      label.classList.add("unlocked");
+    } else {
+      label.textContent = type==='clicks' ? `${user.totalClicks} / ${r.requirement} Clicks`:`Level ${user.level} / ${r.requirement}`;
+      label.classList.add("locked");
+    }
+
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(progressBar);
+    card.appendChild(label);
+
+    container.appendChild(card);
+  });
+}
+
+loadRewards();
+
 </script>
+
 </body>
 </html>

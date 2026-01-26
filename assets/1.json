@@ -1,0 +1,12 @@
+[
+  { "id": "A1", "title": "Go To Click Page", "link": "/a1.html", "badge": "A1" },
+  { "id": "A2", "title": "Go To Click Page", "link": "/a2.html", "badge": "A2" },
+  { "id": "A3", "title": "Go To Click Page", "link": "/a3.html", "badge": "A3" },
+  { "id": "A4", "title": "Go To Click Page", "link": "/a4.html", "badge": "A4" },
+  { "id": "A5", "title": "Go To Click Page", "link": "/a5.html", "badge": "A5" },
+  { "id": "A6", "title": "Go To Click Page", "link": "/a6.html", "badge": "A6" },
+  { "id": "A7", "title": "Go To Click Page", "link": "/a7.html", "badge": "A7" },
+  { "id": "A8", "title": "Go To Click Page", "link": "/a8.html", "badge": "A8" },
+  { "id": "A9", "title": "Go To Click Page", "link": "/a9.html", "badge": "A9" },
+  { "id": "A10", "title": "Go To Click Page", "link": "/a10.html", "badge": "A10" }
+]
