@@ -1,0 +1,18 @@
+[
+  {
+    "thumbnail": "https://via.placeholder.com/300x150/ffdd57/000000",
+    "link": "https://example.com/game1"
+  },
+  {
+    "thumbnail": "https://via.placeholder.com/300x150/ffdd57/111111",
+    "link": "https://example.com/game2"
+  },
+  {
+    "thumbnail": "https://via.placeholder.com/300x150/ffdd57/222222",
+    "link": "https://example.com/game3"
+  },
+  {
+    "thumbnail": "https://via.placeholder.com/300x150/ffdd57/333333",
+    "link": "https://example.com/game4"
+  }
+]

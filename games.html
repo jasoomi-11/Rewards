@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeeto</title>
+  <style>
+    /* Dark Blue Theme */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0d1b2a; 
+      color: #fff;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #1b2a4d; 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    header .logo {
+      font-weight: bold;
+      font-size: 24px;
+      color: #ffdd57;
+    }
+
+    header .profile-icons img {
+      width: 36px;
+      height: 36px;
+      margin-left: 15px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+
+    header .profile-icons img:hover {
+      transform: scale(1.2);
+    }
+
+    .main-title {
+      padding: 20px;
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffdd57;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      padding: 0 20px 20px;
+    }
+
+    .card {
+      background-color: #1b2a4d;
+      border-radius: 15px;
+      overflow: hidden;
+      cursor: pointer;
+      perspective: 1000px; 
+      box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+      transform-style: preserve-3d;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      display: block;
+      border-radius: 15px;
+    }
+
+    .card:hover {
+      transform: rotateY(10deg) translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.6);
+    }
+
+    .card:active {
+      transform: rotateY(0deg) translateY(0px) scale(0.95);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    }
+
+    footer {
+      text-align: right;
+      padding: 15px 20px;
+      background-color: #1b2a4d;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+      font-weight: bold;
+      color: #ffdd57;
+    }
+
+    @media(max-width: 600px){
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .main-title {
+        text-align: center;
+      }
+      footer {
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">JEETO</div>
+    <div class="profile-icons">
+      <a href="#"><img src="https://via.placeholder.com/36" alt="Profile 1"></a>
+      <a href="#"><img src="https://via.placeholder.com/36" alt="Profile 2"></a>
+    </div>
+  </header>
+
+
+
+
+  <!-- Title -->
+  <div class="main-title">PLAY And Earn</div>
+
+
+<!-- Rules Section -->
+<div style="
+  background-color: #1b2a4d; 
+  color: #ffdd57; 
+  padding: 20px; 
+  margin: 20px; 
+  border-radius: 15px; 
+  box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+  font-family: Arial, sans-serif;
+">
+  <h2 style="margin-top: 0; font-size: 28px; text-align: center;">How You Earn / آپ کیسے کمائیں گے</h2>
+  
+  <ul style="line-height: 1.8; font-size: 18px; padding-left: 20px;">
+    <li>
+      Click any game you want to play. <br>
+      کسی بھی گیم پر کلک کریں جو آپ کھیلنا چاہتے ہیں۔
+    </li>
+    <li>
+      Play for at least 30 seconds — your plays will be counted. <br>
+      کم از کم 30 سیکنڈ کھیلیں — آپ کے پلے گنے جائیں گے۔
+    </li>
+    <li>
+      The more you play, the more you earn. <br>
+      جتنا زیادہ کھیلیں گے، اتنا زیادہ کمائیں گے۔
+    </li>
+    <li>
+      Spend more time on a single game — earn through minutes! <br>
+      کسی ایک گیم پر زیادہ وقت گزاریں — منٹ کے حساب سے کمائیں!
+    </li>
+  </ul>
+</div>
+
+
+
+
+  <!-- Grid Cards -->
+  <div class="grid" id="grid"></div>
+
+  <!-- Footer -->
+  <footer>JEETO ALL RIGHT RESERVED</footer>
+
+  <script>
+    // Fetch cards from external JSON file
+    fetch('cards.json')
+      .then(response => response.json())
+      .then(cardsData => {
+        const grid = document.getElementById('grid');
+
+        cardsData.forEach(card => {
+          const cardDiv = document.createElement('div');
+          cardDiv.classList.add('card');
+          cardDiv.innerHTML = `<img src="${card.thumbnail}" alt="Thumbnail">`;
+
+          // Make card clickable
+          cardDiv.addEventListener('click', () => {
+            window.location.href = card.link;
+          });
+
+          grid.appendChild(cardDiv);
+        });
+      })
+      .catch(error => console.error('Error fetching cards:', error));
+  </script>
+
+</body>
+</html>
