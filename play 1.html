@@ -35,6 +35,7 @@
 </head>
 <body>
 
+<!-- Loading Spinner -->
 <div id="loading">
   <div class="spinner"></div>
   <div style="margin-top:10px;">Loading...</div>
@@ -45,17 +46,20 @@
 </header>
 
 <div class="container">
+  <!-- Game Header -->
   <div class="game-header">
     <img src="https://playgama.com/cdn-cgi/imagedelivery/LN2S-4p3-GgZvEx3IPaKUA/06ce1e86-e24c-466e-4fbb-cb4ebc2b5200/enlarged" alt="Hidden Object: Clues and Mysteries">
     <h1>Hidden Object: Clues and Mysteries</h1>
     <button class="play-btn" id="playBtn">Play Now</button>
   </div>
 
+  <!-- Stats -->
   <div class="stats">
     <div><strong>Played Time:</strong> <span id="played-time">0s</span></div>
     <div><strong>Total Plays:</strong> <span id="total-plays">0</span></div>
   </div>
 
+  <!-- Rules Section -->
   <div class="rules">
     <h2>How to Play and Earn / آپ کیسے کمائیں گے</h2>
     <ul>
@@ -69,6 +73,7 @@
   <a href="index.html" class="back-btn">← Back to Games</a>
 </div>
 
+<!-- Fullscreen iframe container -->
 <div id="iframeContainer">
   <button id="quitBtn">← Back / Quit</button>
   <iframe id="gameIframe" src="https://playgama.com/export/game/hidden-object-clues-and-mysteries?clid=p_dcac1d62-2343-4dd3-b9f1-84b78b60da33" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>
@@ -77,7 +82,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -93,7 +98,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let userId, playedTime = 0, timer;
+let userId, playedTime=0, timer, totalPlays=0;
 const playedTimeEl = document.getElementById('played-time');
 const totalPlaysEl = document.getElementById('total-plays');
 const loadingEl = document.getElementById('loading');
@@ -102,7 +107,11 @@ const gameIframe = document.getElementById('gameIframe');
 const quitBtn = document.getElementById('quitBtn');
 const playBtn = document.getElementById('playBtn');
 
-// Auth check
+// Prevent back navigation
+window.history.pushState(null,"",location.href);
+window.onpopstate = () => window.history.pushState(null,"",location.href);
+
+// Auth + User Doc
 onAuthStateChanged(auth, async user => {
   if(!user) return location.replace("index.html");
   userId = user.uid;
@@ -110,52 +119,52 @@ onAuthStateChanged(auth, async user => {
   const userRef = doc(db,"users",userId);
   const snap = await getDoc(userRef);
   if(!snap.exists()){
-    // Create user if not exists
     await setDoc(userRef,{plays:0,timespent:0});
   } else {
     const data = snap.data();
-    playedTimeEl.textContent = data.timespent + "s" || "0s";
+    playedTimeEl.textContent = data.timespent || "0s";
     totalPlaysEl.textContent = data.plays || 0;
   }
 
   loadingEl.style.display = 'none';
 });
 
-// Play button
-playBtn.addEventListener('click', async () => {
+// Start game → increment plays + show iframe fullscreen
+playBtn.addEventListener('click', async ()=>{
   if(!userId) return;
 
-  const userRef = doc(db,"users",userId);
-
-  // Show fullscreen iframe
+  // 1️⃣ Show iframe immediately
   iframeContainer.style.display = 'flex';
+
+  // 2️⃣ Fullscreen request directly
   if(gameIframe.requestFullscreen) gameIframe.requestFullscreen().catch(()=>{});
 
-  // Increment plays
-  await setDoc(userRef, { plays: increment(1) }, { merge: true });
-  totalPlaysEl.textContent = parseInt(totalPlaysEl.textContent) + 1;
+  // 3️⃣ Increment plays
+  totalPlays++;
+  totalPlaysEl.textContent = totalPlays;
 
-  // Timer for timespent
+  // 4️⃣ Async Firebase update (background)
+  const userRef = doc(db,"users",userId);
+  updateDoc(userRef,{ plays: increment(1) });
+
+  // 5️⃣ Start timer
   clearInterval(timer);
   playedTime = 0;
-  timer = setInterval(async () => {
+  timer = setInterval(()=>{
     playedTime++;
     playedTimeEl.textContent = playedTime + "s";
-    // Update Firestore every 5 seconds
     if(playedTime % 5 === 0){
-      await setDoc(userRef, { timespent: increment(5) }, { merge: true });
+      updateDoc(userRef,{ timespent: increment(5) });
     }
-  }, 1000);
+  },1000);
 });
 
-// Quit button
-quitBtn.addEventListener('click', async () => {
+// Quit / Back button
+quitBtn.addEventListener('click', async ()=>{
   if(!userId) return;
   clearInterval(timer);
-
   const userRef = doc(db,"users",userId);
-  await setDoc(userRef, { timespent: increment(playedTime) }, { merge: true });
-
+  await updateDoc(userRef,{ timespent: increment(playedTime) });
   iframeContainer.style.display = 'none';
   gameIframe.src = gameIframe.src; // reset iframe
   playedTime = 0;
