@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Page - JEETO</title>
+<style>
+  body { margin:0; font-family: Arial, sans-serif; background:#0d1b2a; color:#fff; }
+  header { display:flex; justify-content:space-between; align-items:center; padding:10px 20px; background:#1b2a4d; box-shadow:0 4px 8px rgba(0,0,0,0.3); }
+  header .logo { font-weight:bold; font-size:24px; color:#ffdd57; }
+  .container { padding:20px; max-width:800px; margin:auto; }
+  .game-header { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; }
+  .game-header img { width:100%; border-radius:15px; box-shadow:0 8px 15px rgba(0,0,0,0.4); margin-bottom:15px; }
+  .game-header h1 { font-size:32px; color:#ffdd57; margin-bottom:15px; text-align:center; }
+  .play-btn { padding:12px 30px; font-size:18px; background:#ffdd57; color:#0d1b2a; border:none; border-radius:10px; cursor:pointer; transition:0.2s; }
+  .play-btn:hover { transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,0.3); }
+  .stats { display:flex; justify-content:space-around; margin:20px 0; font-size:18px; background:#1b2a4d; padding:15px; border-radius:15px; box-shadow:0 8px 15px rgba(0,0,0,0.4); }
+  .stats div { text-align:center; }
+  .rules { background:#1b2a4d; color:#ffdd57; padding:20px; margin-bottom:20px; border-radius:15px; box-shadow:0 8px 15px rgba(0,0,0,0.4); }
+  .rules h2 { text-align:center; font-size:28px; margin-top:0; }
+  .rules ul { padding-left:20px; line-height:1.8; font-size:18px; }
+  .back-btn { display:block; margin:20px auto; padding:12px 30px; font-size:18px; background:#ffdd57; color:#0d1b2a; border:none; border-radius:10px; text-align:center; text-decoration:none; cursor:pointer; transition:0.2s; }
+  .back-btn:hover { transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,0.3); }
+
+  /* Loading spinner */
+  #loading { position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(13,27,42,0.95); display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:24px; color:#ffdd57; z-index:9999; }
+  .spinner { border:6px solid #f3f3f3; border-top:6px solid #ffdd57; border-radius:50%; width:60px; height:60px; animation:spin 1s linear infinite; }
+  @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+
+  /* Fullscreen iframe */
+  #iframeContainer { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:1000; justify-content:center; align-items:center; flex-direction:column; }
+  #gameIframe { width:100%; height:100%; border:none; }
+  #quitBtn { position:absolute; top:20px; right:20px; padding:12px 20px; font-size:18px; border:none; border-radius:10px; background:#ffdd57; color:#0d1b2a; cursor:pointer; z-index:1010; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="margin-top:10px;">Loading...</div>
+</div>
+
+<header>
+  <div class="logo">JEETO</div>
+</header>
+
+<div class="container">
+  <div class="game-header">
+    <img src="https://playgama.com" alt="Hidden Object: Clues and Mysteries">
+    <h1>Hidden Object: Clues and Mysteries</h1>
+    <button class="play-btn" id="playBtn">Play Now</button>
+  </div>
+
+  <div class="stats">
+    <div><strong>Played Time:</strong> <span id="played-time">0s</span></div>
+    <div><strong>Total Plays:</strong> <span id="total-plays">0</span></div>
+  </div>
+
+  <div class="rules">
+    <h2>How to Play and Earn / آپ کیسے کمائیں گے</h2>
+    <ul>
+      <li>Click Play Now to start the game. <br> پلے ناؤ پر کلک کریں تاکہ گیم شروع ہو۔</li>
+      <li>Play for at least 30 seconds — your plays will be counted. <br> کم از کم 30 سیکنڈ کھیلیں — آپ کے پلے گنے جائیں گے۔</li>
+      <li>The more you play, the more you earn. <br> جتنا زیادہ کھیلیں گے، اتنا زیادہ کمائیں گے۔</li>
+      <li>Spend more time on a single game — earn through minutes! <br> کسی ایک گیم پر زیادہ وقت گزاریں — منٹ کے حساب سے کمائیں!</li>
+    </ul>
+  </div>
+
+  <a href="index.html" class="back-btn">← Back to Games</a>
+</div>
+
+<div id="iframeContainer">
+  <button id="quitBtn">← Back / Quit</button>
+  <iframe id="gameIframe" src="https://playgama.com" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54",
+  storageBucket: "rewards-b8f54.appspot.com",
+  messagingSenderId: "588528777945",
+  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let userId, timer;
+const playedTimeEl = document.getElementById('played-time');
+const totalPlaysEl = document.getElementById('total-plays');
+const loadingEl = document.getElementById('loading');
+const iframeContainer = document.getElementById('iframeContainer');
+const gameIframe = document.getElementById('gameIframe');
+const quitBtn = document.getElementById('quitBtn');
+const playBtn = document.getElementById('playBtn');
+
+// Auth check
+onAuthStateChanged(auth, async user => {
+  if(!user) return location.replace("index.html");
+  userId = user.uid;
+
+  const userRef = doc(db, "users", userId);
+  const snap = await getDoc(userRef);
+  
+  if(!snap.exists()){
+    // Initialize the doc with 0 values so increment works properly later
+    await setDoc(userRef, { plays: 0, timespent: 0 });
+    playedTimeEl.textContent = "0s";
+    totalPlaysEl.textContent = "0";
+  } else {
+    const data = snap.data();
+    playedTimeEl.textContent = (data.timespent || 0) + "s";
+    totalPlaysEl.textContent = data.plays || 0;
+  }
+
+  loadingEl.style.display = 'none';
+});
+
+// Play button logic
+playBtn.addEventListener('click', async () => {
+  if(!userId) return;
+  const userRef = doc(db, "users", userId);
+
+  // Open iframe
+  iframeContainer.style.display = 'flex';
+  
+  // Update Plays immediately
+  try {
+    await updateDoc(userRef, { plays: increment(1) });
+    totalPlaysEl.textContent = parseInt(totalPlaysEl.textContent) + 1;
+  } catch (e) {
+    console.error("Error incrementing plays:", e);
+  }
+
+  // Timer for session time
+  clearInterval(timer);
+  let sessionSeconds = 0;
+
+  timer = setInterval(async () => {
+    sessionSeconds++;
+    
+    // Update local UI timer (adding 1 to current display)
+    const currentDisplayTime = parseInt(playedTimeEl.textContent);
+    playedTimeEl.textContent = (currentDisplayTime + 1) + "s";
+
+    // Sync to Firestore every 5 seconds
+    if (sessionSeconds % 5 === 0) {
+      try {
+        await updateDoc(userRef, { timespent: increment(5) });
+      } catch (e) {
+        console.error("Error syncing time:", e);
+      }
+    }
+  }, 1000);
+});
+
+// Quit button logic
+quitBtn.addEventListener('click', () => {
+  clearInterval(timer);
+  iframeContainer.style.display = 'none';
+  // Reset iframe src to stop the game audio/logic
+  const originalSrc = gameIframe.src;
+  gameIframe.src = "";
+  gameIframe.src = originalSrc;
+});
+</script>
+</body>
+</html>
