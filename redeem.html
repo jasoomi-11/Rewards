@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Redeem Vouchers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{
+  background:radial-gradient(circle at top,#102a80,#050b2e);
+  color:#fff;
+  min-height:100vh;
+  padding:30px;
+  overflow-x:hidden;
+}
+
+/* ===== Spinner ===== */
+#loader{
+  position:fixed;
+  inset:0;
+  background:#050b2e;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+.spinner{
+  width:70px;height:70px;
+  border:6px solid rgba(255,255,255,.2);
+  border-top:6px solid #00e0ff;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== Popup ===== */
+#popup{
+  position:fixed;
+  top:-100px;
+  left:50%;
+  transform:translateX(-50%);
+  background:linear-gradient(135deg,#00e0ff,#1f3cff);
+  color:#000;
+  padding:14px 28px;
+  border-radius:14px;
+  font-weight:700;
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
+  transition:.6s;
+  z-index:9999;
+}
+#popup.show{top:25px}
+
+/* ===== UI ===== */
+h1{text-align:center;color:#00e0ff;font-size:36px;margin-bottom:8px}
+p{text-align:center;opacity:.8;margin-bottom:40px}
+
+.cards{
+  max-width:1100px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:32px;
+}
+
+/* ===== Card ===== */
+.flip-card{perspective:1600px}
+.card-inner{
+  height:210px;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:.9s cubic-bezier(.4,.2,.2,1);
+}
+.flip-card:hover .card-inner{
+  transform:rotateY(180deg);
+}
+
+.card{
+  position:absolute;
+  inset:0;
+  border-radius:24px;
+  padding:26px;
+  backface-visibility:hidden;
+  box-shadow:0 25px 60px rgba(0,0,0,.6);
+}
+
+/* ===== Front ===== */
+.front{
+  background:linear-gradient(135deg,#1f3cff,#00b3ff);
+}
+.front h3{font-size:25px}
+.front span{font-size:14px;display:block;margin-top:10px}
+.lock{
+  position:absolute;
+  bottom:20px;
+  right:20px;
+  font-size:28px;
+}
+
+/* ===== Completed Badge ===== */
+.completed-badge{
+  position:absolute;
+  bottom:20px;
+  left:20px;
+  background:rgba(0,0,0,.45);
+  padding:6px 14px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:#00e0ff;
+}
+
+/* ===== Back ===== */
+.back{
+  transform:rotateY(180deg);
+  background:linear-gradient(135deg,#0b1b4d,#050b2e);
+  text-align:center;
+}
+.code{
+  margin-top:60px;
+  font-size:30px;
+  letter-spacing:6px;
+}
+button{
+  margin-top:22px;
+  padding:12px 26px;
+  border:none;
+  border-radius:14px;
+  background:#00e0ff;
+  font-weight:800;
+  cursor:pointer;
+}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+/* ===== Animations ===== */
+@keyframes glow{
+  0%{box-shadow:0 0 0 rgba(0,224,255,0)}
+  50%{box-shadow:0 0 25px rgba(0,224,255,.9)}
+  100%{box-shadow:0 0 0 rgba(0,224,255,0)}
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-2px)}
+  75%{transform:translateX(2px)}
+}
+
+/* ONLY new unlock */
+.flip-card.new .front{animation:glow 2.5s infinite}
+.flip-card.locked .front{animation:shake 3s infinite}
+</style>
+</head>
+
+<body>
+
+<div id="loader"><div class="spinner"></div></div>
+<div id="popup">🎉 Voucher Unlocked!</div>
+
+<h1>🎁 Redeem Vouchers</h1>
+<p>Unlock vouchers using your total engagement time</p>
+
+<div class="cards" id="voucherCards"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54",
+  storageBucket: "rewards-b8f54.appspot.com",
+  messagingSenderId: "588528777945",
+  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"
+});
+
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+const loader=document.getElementById("loader");
+const wrap=document.getElementById("voucherCards");
+const popup=document.getElementById("popup");
+
+let userData,userRef;
+
+function showPopup(){
+  popup.classList.add("show");
+  setTimeout(()=>popup.classList.remove("show"),5000);
+}
+
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.href="index.html";return;}
+  userRef=doc(db,"users",user.uid);
+  const snap=await getDoc(userRef);
+  userData=snap.data();
+  loader.style.display="none";
+  loadCards();
+});
+
+async function loadCards(){
+  const res=await fetch("/assets/data/vouchers.json");
+  const cards=await res.json();
+
+  for(const v of cards){
+    const card=document.createElement("div");
+    card.className="flip-card locked";
+
+    let unlocked=false;
+    let completed=userData.redeemedVouchers?.includes(v.id);
+    let code="XXXXXX";
+
+    const vsnap=await getDoc(doc(db,"vouchers",v.id));
+    if(vsnap.exists()){
+      const vd=vsnap.data();
+      if(userData.totalEngagement>=vd.unlock){
+        unlocked=true;
+        code=vd.code;
+        card.classList.remove("locked");
+        if(!completed){
+          card.classList.add("new");
+          showPopup();
+          await updateDoc(userRef,{
+            redeemedVouchers:[...(userData.redeemedVouchers||[]),v.id]
+          });
+        }
+      }
+    }
+
+    card.innerHTML=`
+      <div class="card-inner">
+        <div class="card front">
+          <h3>${v.title}</h3>
+          <span>Reach ${v.required} seconds total engagement</span>
+          ${completed?'<div class="completed-badge">COMPLETED</div>':''}
+          <div class="lock">${unlocked?"🔓":"🔒"}</div>
+        </div>
+        <div class="card back">
+          <div class="code">${unlocked?code:"XXXXXX"}</div>
+          <button ${(!unlocked||completed)?"disabled":""}>
+            ${completed?"COMPLETED":unlocked?"Copy Code":"Locked"}
+          </button>
+        </div>
+      </div>
+    `;
+
+    if(unlocked && !completed){
+      card.querySelector("button").onclick=()=>{
+        navigator.clipboard.writeText(code);
+        card.querySelector("button").disabled=true;
+        card.querySelector("button").innerText="COMPLETED";
+      };
+    }
+
+    wrap.appendChild(card);
+  }
+}
+</script>
+</body>
+</html>

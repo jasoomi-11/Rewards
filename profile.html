@@ -2,196 +2,243 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>User Profile</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile</title>
+
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
-body{background:linear-gradient(135deg,#0b1d61,#08123a);color:#fff;min-height:100vh;display:flex;flex-direction:column;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{
+  background:linear-gradient(135deg,#0b1d61,#08123a);
+  color:#fff;
+  min-height:100vh;
+}
 
 /* Header */
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 25px;
-  background: #0a184f;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.header-left .logo { width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid #00aaff; }
-.header-right { display:flex; align-items:center; gap:10px; }
-.header-right .user-profile {
-  width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  border:2px solid #00aaff; cursor:pointer; background:#1a2b8f; font-size:22px; color:#fff; transition:.3s;
-}
-.header-right .user-profile:hover{ transform: scale(1.1); box-shadow:0 0 15px #00aaff80; }
-.membership-badge { background: gold; color:#000; font-weight:bold; padding:4px 10px; border-radius:12px; font-size:13px; display:flex; align-items:center; gap:4px; }
-
-/* Profile container */
-.profile-container{
-  max-width:700px; margin:30px auto; padding:0 15px; display:flex; flex-direction:column; gap:15px;
-}
-
-/* Info card */
-.info-card{
-  background:linear-gradient(135deg,#1a2b8f,#243bba);
-  padding:20px 25px;
-  border-radius:18px;
-  box-shadow:0 15px 30px rgba(0,0,0,.35);
+header{
+  background:#0a184f;
+  padding:14px 22px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  font-size:17px;
-  font-weight:600;
-  transition:.25s;
+  justify-content:space-between;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);
 }
-.info-card:hover{ transform: translateY(-3px); box-shadow:0 25px 45px rgba(0,0,0,.5);}
-.info-card span{font-size:13px; opacity:.8; display:block;}
-.info-card strong{font-size:18px; color:#fff;}
+.logo{width:48px;height:48px;border-radius:50%;border:2px solid #00e0ff}
+.user{
+  width:46px;height:46px;border-radius:50%;
+  background:#1a2b8f;
+  border:2px solid #00e0ff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;
+}
 
-/* Progress bar for Level */
+/* Loader */
+#loader{
+  position:fixed;inset:0;
+  background:#08123a;
+  display:flex;align-items:center;justify-content:center;
+  z-index:999;
+}
+.spinner{
+  width:52px;height:52px;
+  border:5px solid rgba(255,255,255,.25);
+  border-top:5px solid #00e0ff;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Main */
+.main{
+  max-width:900px;
+  margin:30px auto;
+  padding:0 16px;
+  display:none;
+}
+
+/* Profile Card */
+.profile-card{
+  background:linear-gradient(145deg,#1a2b8f,#243bba);
+  border-radius:22px;
+  padding:24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.45);
+  margin-bottom:22px;
+}
+.profile-top{
+  display:flex;
+  gap:18px;
+  align-items:center;
+}
+.avatar{
+  width:70px;height:70px;border-radius:50%;
+  background:#00e0ff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;color:#08123a;
+}
+.profile-info h2{margin-bottom:4px}
+.profile-info small{opacity:.8}
+
+/* Stats Grid */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:18px;
+  margin-bottom:22px;
+}
+.stat{
+  background:linear-gradient(145deg,#16257a,#1f33a0);
+  padding:20px;
+  border-radius:18px;
+  box-shadow:0 12px 28px rgba(0,0,0,.4);
+}
+.stat span{font-size:13px;opacity:.85}
+.stat strong{font-size:20px}
+
+/* Level Card */
+.level-card{
+  background:linear-gradient(145deg,#0f9d58,#0bbd6e);
+  padding:22px;
+  border-radius:20px;
+  box-shadow:0 0 28px #0f9d5890;
+}
+.level-card h3{margin-bottom:6px}
 .progress-bar{
-  width:50%; height:12px; background:rgba(255,255,255,0.2); border-radius:8px; overflow:hidden; margin-top:6px;
+  height:14px;
+  background:rgba(255,255,255,.3);
+  border-radius:12px;
+  overflow:hidden;
+  margin-top:10px;
 }
 .progress{
-  height:12px; background:#00aaff; width:0%; border-radius:8px; transition:width 1s;
+  height:14px;
+  background:#ffffff;
+  width:0%;
+  transition:1s;
 }
 
-/* Logout button */
-.logout-btn{
-  margin:25px auto; display:block; background:#ff4c4c; color:#fff; border:none;
-  padding:14px 28px; border-radius:12px; font-size:16px; cursor:pointer; font-weight:bold; transition:.25s;
+/* Logout */
+.logout{
+  margin:30px auto 10px;
+  display:block;
+  background:#ff4c4c;
+  color:#fff;
+  border:none;
+  padding:14px 36px;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
 }
-.logout-btn:hover{ background:#ff6666; }
 
 /* Footer */
 footer{
-  text-align:center; padding:15px 0; margin-top:auto;
-  background:#0a184f; box-shadow:0 -4px 12px rgba(0,0,0,0.4); font-size:14px; color:#00e0ff;
+  margin-top:40px;
+  background:#0a184f;
+  padding:18px 10px;
+  text-align:center;
+  font-size:14px;
+  color:#00e0ff;
 }
-
-/* Spinner */
-#loading { position:fixed; top:0; left:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:#08123a; z-index:999; }
-.spinner { border:5px solid rgba(255,255,255,0.3); border-top:5px solid #00aaff; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; }
-@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+footer a{color:#00e0ff;margin:0 8px;text-decoration:none}
 </style>
 </head>
+
 <body>
 
 <header>
-  <div class="header-left">
-    <img src="logo.png" alt="Logo" class="logo">
-  </div>
-  <div class="header-right">
-    <a href="#" class="user-profile">👤</a>
-    <div class="membership-badge" id="membershipBadge" style="display:none;">💎 VIP</div>
-  </div>
+  <img src="logo.png" class="logo">
+  <div class="user">👤</div>
 </header>
 
-<div id="loading"><div class="spinner"></div></div>
+<div id="loader"><div class="spinner"></div></div>
 
-<div class="profile-container" id="profileContainer" style="display:none;">
-  <div class="info-card"><div><span>Name</span><strong id="name">-</strong></div></div>
-  <div class="info-card"><div><span>Email</span><strong id="email">-</strong></div></div>
-  <div class="info-card"><div><span>Total Clicks</span><strong id="totalClicks">0</strong></div></div>
-  <div class="info-card"><div><span>Today Clicks</span><strong id="todayClicks">0</strong></div></div>
-  <div class="info-card"><div><span>Date Joined</span><strong id="joined">-</strong></div></div>
-  <div class="info-card" style="flex-direction:column;align-items:flex-start;">
-    <span>Level</span>
-    <strong id="userLevel">1</strong>
+<div class="main" id="main">
+
+  <div class="profile-card">
+    <div class="profile-top">
+      <div class="avatar">👤</div>
+      <div class="profile-info">
+        <h2 id="name">User</h2>
+        <small id="email">email@example.com</small><br>
+        <small>Joined: <span id="joined">-</span></small>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <span>Total Engagement</span>
+      <strong id="engagement">0</strong>
+    </div>
+    <div class="stat">
+      <span>Game Time</span>
+      <strong id="gameTime">0 sec</strong>
+    </div>
+  </div>
+
+  <div class="level-card">
+    <h3>Level Progress</h3>
+    <strong>Level <span id="level">1</span></strong>
     <div class="progress-bar">
       <div class="progress" id="levelProgress"></div>
     </div>
-    <small id="nextLevelReq" style="color:#00e0ff;margin-top:4px;font-size:12px;"></small>
   </div>
-  <div class="info-card"><div><span>Withdrawal</span><strong id="withdraw">$0.00</strong></div></div>
-  <div class="info-card"><div><span>Game Played Time</span><strong id="gameTime">0h 0m</strong></div></div>
-  <button class="logout-btn" id="logoutBtn">Logout</button>
+
+  <button class="logout" id="logoutBtn">Logout</button>
+
 </div>
 
-<footer>JEETO All rights reserved</footer>
+<footer>
+  <p>This app is for entertainment purposes only.</p>
+  <a href="#">About</a> |
+  <a href="#">Terms & Conditions</a> |
+  <a href="#">Privacy Policy</a>
+</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-// Firebase config
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
-  projectId: "rewards-b8f54",
-  storageBucket: "rewards-b8f54.appspot.com",
-  messagingSenderId: "588528777945",
-  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"
-};
-
-const app = initializeApp(firebaseConfig);
+  projectId: "rewards-b8f54"
+});
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const loading = document.getElementById("loading");
-const profileContainer = document.getElementById("profileContainer");
-const badge = document.getElementById("membershipBadge");
+const loader = document.getElementById("loader");
+const main = document.getElementById("main");
 
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, async user=>{
   if(!user) return location.replace("index.html");
 
-  const userRef = doc(db,"users",user.uid);
-  const snap = await getDoc(userRef);
-  if(!snap.exists()) return location.replace("index.html");
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists()) return;
 
-  const data = snap.data();
+  const d = snap.data();
 
-  // Fill profile info
-  document.getElementById("name").textContent = data.name || "-";
-  document.getElementById("email").textContent = data.email || "-";
-  document.getElementById("totalClicks").textContent = data.totalClicks || 0;
-  document.getElementById("todayClicks").textContent = data.todayClicks || 0;
-  document.getElementById("withdraw").textContent = "$" + ((data.withdraw || 0).toFixed(2));
-  document.getElementById("gameTime").textContent = data.gameTime || "0h 0m";
-  document.getElementById("joined").textContent = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString() : "-";
+  document.getElementById("name").textContent = d.name || "User";
+  document.getElementById("email").textContent = d.email || "-";
+  document.getElementById("joined").textContent =
+    d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : "-";
 
-  // Membership badge
-  if(data.membership === "active") badge.style.display = "flex";
-  else badge.style.display = "none";
+  document.getElementById("engagement").textContent = d.totalEngagement || 0;
+  document.getElementById("gameTime").textContent = (d.gameSeconds||0)+" sec";
+  document.getElementById("level").textContent = d.currentLevel || 1;
 
-  // Level from levels map in user doc
-  const totalClicks = data.all|| 0;
-  const levelsMap = data.levels || {}; // user doc should have levels map
-  const levelsArr = Object.entries(levelsMap)
-    .map(([lvl, req]) => ({ level: lvl.replace("level",""), clicks: req }))
-    .sort((a,b)=>a.clicks-b.clicks);
+  document.getElementById("levelProgress").style.width =
+    Math.min((d.totalEngagement||0)%100,100)+"%";
 
-  let currentLevel = 1;
-  let currentMin = 0;
-  let nextMin = levelsArr[0]?.clicks || 0;
-
-  for(let i=0;i<levelsArr.length;i++){
-    if(totalClicks >= levelsArr[i].clicks){
-      currentLevel = levelsArr[i].level;
-      currentMin = levelsArr[i].clicks;
-      nextMin = levelsArr[i+1]?.clicks ?? levelsArr[i].clicks;
-    } else break;
-  }
-
-  document.getElementById("userLevel").textContent = currentLevel;
-  const progressPercent = Math.min(((totalClicks-currentMin)/(nextMin-currentMin))*100,100);
-  document.getElementById("levelProgress").style.width = progressPercent + "%";
-  document.getElementById("nextLevelReq").textContent = `Clicks to Level ${Number(currentLevel)+1}: ${Math.max(nextMin-totalClicks,0)}`;
-
-  // Show profile container
-  loading.style.display = "none";
-  profileContainer.style.display = "flex";
+  loader.style.display="none";
+  main.style.display="block";
 });
 
-// Logout
-document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+document.getElementById("logoutBtn").onclick=async()=>{
   await signOut(auth);
   location.replace("index.html");
-});
+};
 </script>
+
 </body>
 </html>

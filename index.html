@@ -7,10 +7,10 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-// 🔥 Firebase Config
+/* 🔥 Firebase Config */
 const firebaseConfig = {
   apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
   authDomain: "rewards-b8f54.firebaseapp.com",
@@ -25,6 +25,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
+
   const form = document.getElementById("loginForm");
   const errorDiv = document.getElementById("error");
   const btnText = document.getElementById("btnText");
@@ -44,63 +45,120 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // ✅ Firebase Authentication
+      /* ✅ Firebase Auth */
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-      // ✅ Check Firestore user document
+      /* ✅ Firestore user document */
       const userRef = doc(db, "users", uid);
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        errorDiv.textContent = "User not found. Please sign up!";
+        errorDiv.textContent = "User record not found. Please sign up.";
         btnText.textContent = "Login";
         return;
       }
 
       const userData = userSnap.data();
 
-      // ✅ Redirect based on account status
-      if (userData.account === "approved") {
+      /* ✅ REVIEW STATUS CHECK (UPDATED) */
+      if (userData.reviewStatus === "approved") {
         location.replace("dashboard.html");
-      } else if (userData.account === "pending") {
+      } 
+      else if (userData.reviewStatus === "pending") {
         location.replace("approve.html");
-      } else {
-        errorDiv.textContent = "Account status unknown. Contact support.";
+      } 
+      else if (userData.reviewStatus === "restricted") {
+        errorDiv.textContent = "Your account is restricted. Contact support.";
+      } 
+      else {
+        errorDiv.textContent = "Invalid account status.";
       }
 
     } catch (err) {
       console.error(err);
-      errorDiv.textContent = "Invalid email or password! Please sign up if you don't have an account.";
+      errorDiv.textContent = "Invalid email or password.";
     } finally {
       btnText.textContent = "Login";
     }
   });
+
 });
 </script>
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
-body { background: linear-gradient(180deg,#0b1d61,#0a184f); min-height:100vh; display:flex; justify-content:center; align-items:center; color:#fff; }
-form { width:100%; max-width:400px; background:#0d1b2a; padding:35px 25px; border-radius:12px; box-shadow:0 15px 35px rgba(0,0,0,.7); position:relative; }
-h1 { text-align:center; margin-bottom:20px; color:#00aaff; }
-input, button { width:100%; padding:12px; border-radius:8px; border:none; font-size:16px; }
-input { margin-bottom:15px; text-align:center; }
-button { background:#1a2b8f; color:#fff; cursor:pointer; position:relative; font-weight:bold; transition:0.3s; }
-button:hover { background:#2563eb; }
-.error { color:#ff4c4c; text-align:center; margin-bottom:10px; }
-a { display:block; text-align:center; margin-top:10px; color:#9ec1ff; text-decoration:none; }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI',sans-serif;
+}
+body{
+  background:linear-gradient(180deg,#0b1d61,#0a184f);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#fff;
+}
+form{
+  width:100%;
+  max-width:400px;
+  background:#0d1b2a;
+  padding:35px 25px;
+  border-radius:12px;
+  box-shadow:0 15px 35px rgba(0,0,0,.7);
+}
+h1{
+  text-align:center;
+  margin-bottom:20px;
+  color:#00aaff;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:none;
+  font-size:16px;
+}
+input{
+  margin-bottom:15px;
+  text-align:center;
+}
+button{
+  background:#1a2b8f;
+  color:#fff;
+  cursor:pointer;
+  font-weight:bold;
+  transition:.3s;
+}
+button:hover{
+  background:#2563eb;
+}
+.error{
+  color:#ff4c4c;
+  text-align:center;
+  margin-bottom:10px;
+}
+a{
+  display:block;
+  text-align:center;
+  margin-top:10px;
+  color:#9ec1ff;
+  text-decoration:none;
+}
 </style>
 </head>
+
 <body>
 
 <form id="loginForm">
-<h1>Login</h1>
-<div class="error" id="error"></div>
-<input type="email" id="email" placeholder="Email" required>
-<input type="password" id="password" placeholder="Password" required>
-<button type="submit"><span id="btnText">Login</span></button>
-<a href="signup.html">Don't have an account? Sign Up</a>
+  <h1>Login</h1>
+  <div class="error" id="error"></div>
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="password" id="password" placeholder="Password" required>
+  <button type="submit"><span id="btnText">Login</span></button>
+  <a href="signup.html">Don't have an account? Sign Up</a>
 </form>
 
 </body>

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "level2",
+    "title": "Watch 5 Ads",
+    "required": 5,
+    "achieved": 3
+  },
+  {
+    "id": "engagement400",
+    "title": "Install 3 Apps",
+    "required": 3,
+    "achieved": 3
+  },
+  {
+    "id": "level4",
+    "title": "Reach Level 10",
+    "required": 10,
+    "achieved": 6
+  },
+  {
+    "id": "level5",
+    "title": "Daily Login",
+    "required": 7,
+    "achieved": 2
+  }
+]

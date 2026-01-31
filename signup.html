@@ -90,58 +90,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // ===== 1️⃣ Create Auth User =====
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = userCredential.user.uid;
+// ===== 1️⃣ Create Auth User =====
+const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const uid = userCredential.user.uid;
 
-      // ===== 2️⃣ Create Firestore User Doc with defaults =====
-      await setDoc(doc(db, "users", uid), {
-        uid,
-        name,
-        email,
-        password, // optional: consider hashing or removing plain password
-        deviceHash,
-        status: "active",
-        account: "pending",
-        frozen: false,
-        allTimeClicks: 0,
-        currentLevel: 1,
-        weekClicks:0,
-        all:0,
-        weekNum:0,
-        withdraw: 0,
-        membership: "inactive",
-        createdAt: serverTimestamp(),
-        activeToken: signupToken,
-      
-        usedTokens: [],
-        lastClickAt: null,
-        cooldownUntil: 0,
+// ===== 2️⃣ Create Firestore User Doc (SAFE DEFAULTS) =====
+await setDoc(doc(db, "users", uid), {
 
-        // ===== Level system =====
-        levels: {
-          level2: 2500,
-          level3: 6000,
-          level4: 10000,
-          level5: 12000,
-          level6: 15000,
-          level7: 18000,
-          level8: 21000,
-          level9: 24000,
-          level10: 27000
-        },
+  /* ===== BASIC INFO ===== */
+  uid: uid,
+  name: name,
+  email: email,
+  createdAt: serverTimestamp(),
 
-        // ===== Rewards placeholder =====
-        rewards: {},
+  /* ===== ACCOUNT CONTROL ===== */
+  reviewStatus: "pending",   // pending | approved | restricted
+  frozen: false,
 
-        // ===== Leaderboard placeholder =====
-        leaderboard: {},
+  /* ===== SECURITY ===== */
+  deviceHash: deviceHash,    // hashed device id
+  activeToken: signupToken,
+  usedTokens: [],
 
-        // ===== Tasks =====
-        usedTasks: [],          // completed tasks IDs, limit 30 clicks
-        usedTasksLimit: 30,     // maximum clicks per day for standard tasks
-        extraTasks: []          // extra tasks available after membership
-      });
+  /* ===== ENGAGEMENT / ANALYTICS ===== */
+  activityScore: 0,          // combined engagement score
+  blogSeconds: 0,            // blog reading time (seconds)
+  gameSeconds: 0,            // games play time (seconds)
+
+  totalEngagement: 0,        // ✅ blogSeconds + gameSeconds (MAIN LOGIC)
+  lastActiveAt: null,
+
+  /* ===== LEVEL SYSTEM ===== */
+  currentLevel: 1,
+  progressValue: 0,          // 0–100
+
+  /* ===== VOUCHERS ===== */
+  redeemedVouchers: []       // ✅ ["voucher1","voucher2"]
+});
 
       // ===== 3️⃣ Redirect =====
       window.location.href = "approve.html";

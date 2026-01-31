@@ -1,0 +1,17 @@
+[
+  {
+    "id": "pubg_uc",
+    "title": "PUBG UC",
+    "required": 720
+  },
+  {
+    "id": "coc_gems",
+    "title": "Clash of Clans Gems",
+    "required": 1800
+  },
+  {
+    "id": "ff_diamonds",
+    "title": "Free Fire Diamonds",
+    "required": 3600
+  }
+]

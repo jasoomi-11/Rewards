@@ -2,282 +2,258 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>Achievements</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rewards Dashboard</title>
+
 <style>
+:root{
+  --bg-main:#071a3a;
+  --bg-card:#0e2a5a;
+  --bg-progress:#0a1e3f;
+  --accent:#3fa9f5;
+  --text-soft:#b9d4ff;
+}
+
+*{box-sizing:border-box}
+
 body{
   margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:linear-gradient(135deg,#0b1d61,#08123a);
+  font-family:"Segoe UI",Roboto,Arial,sans-serif;
+  background:linear-gradient(135deg,#050f24,#0a2c66);
   color:#fff;
-  min-height:100vh;
 }
 
-/* Header container */
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 25px;
-  background: #0a184f;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-/* Left - Logo */
-.header-left .logo {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #00aaff;
-}
-
-/* Right - User profile */
-.header-right .user-profile {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #00aaff;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  background: #1a2b8f;
-  font-size: 22px;
-  text-decoration: none; /* Remove underline for <a> */
-  color: inherit;
-}
-.header-right .user-profile:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px #00aaff80;
-}
-
-/* Profile icon inside */
-.profile-icon {
-  display: inline-block;
-  line-height: 1;
-  user-select: none;
-}
-.section-title{
-  max-width:1000px;
-  margin:40px auto 10px auto;
-  font-size:22px;
-  color:#00e0ff;
-  text-shadow:0 0 6px #00aaff40;
-  padding-left:15px;
-}
-.cards-container{
-  max-width:1000px;
-  margin:10px auto 30px auto;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:20px;
-  padding:0 15px;
-}
-
-/* Card styles */
-.card{
-  background:linear-gradient(145deg,#1a2b8f,#243bba);
-  padding:25px 20px;
-  border-radius:20px;
-  text-align:center;
-  box-shadow:0 10px 25px rgba(0,0,0,0.5);
-  font-weight:700;
-  color:#fff;
-  cursor:not-allowed;
-  position:relative;
-  overflow:hidden;
-  transition:transform 0.3s, box-shadow 0.3s;
-}
-.card:hover{
-  transform:translateY(-5px);
-  box-shadow:0 20px 40px rgba(0,0,0,0.6);
-}
-.card h3{
-  font-size:20px;
-  margin-bottom:12px;
-  color:#00e0ff;
+#spinner{
+  position:fixed;
+  inset:0;
+  background:#050f24;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
-}
-.card p{
-  font-size:14px;
-  margin-bottom:12px;
-  color:#b0d4ff;
+  z-index:9999;
 }
 
-/* Progress bar */
-.progress-bar{
-  width:100%;
-  height:14px;
-  background:rgba(255,255,255,0.15);
-  border-radius:10px;
+.loader{
+  width:48px;
+  height:48px;
+  border:5px solid #1c3f7a;
+  border-top:5px solid #3fa9f5;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{100%{transform:rotate(360deg)}}
+
+.container{
+  padding:24px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:24px;
+  max-width:1200px;
+  margin:auto;
+}
+
+.card{
+  position:relative;
+  background:linear-gradient(180deg,#0f2f66,#0b2450);
+  border-radius:16px;
+  padding:18px;
+  height:160px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+}
+
+.card.unlocked{
+  animation:wave 2s infinite;
+  box-shadow:0 0 18px rgba(63,169,245,.9);
+  cursor:pointer;
+}
+
+.card.completed{
+  opacity:.6;
+  cursor:default;
+}
+
+@keyframes wave{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+
+h3{margin:0;font-size:17px}
+.sub{font-size:13px;color:var(--text-soft)}
+
+.progress-box{
+  height:10px;
+  background:#0a1e3f;
+  border-radius:20px;
   overflow:hidden;
-  margin-bottom:8px;
+  margin:14px 0 10px;
 }
-.progress{
-  height:14px;
-  background:linear-gradient(90deg,#00e0ff,#00aaff);
+
+.progress-bar{
+  height:100%;
   width:0%;
-  border-radius:10px;
-  transition:width 1s ease-in-out;
+  background:linear-gradient(90deg,#3fa9f5,#00e0ff);
+  transition:width .8s ease;
 }
 
-/* Level/Click label */
-.level-label{
+.stats{
   font-size:13px;
-  margin-top:4px;
-  opacity:0.85;
-  color:#fff;
-  font-weight:500;
-  text-shadow:0 0 4px #0003;
+  display:flex;
+  justify-content:space-between;
+  color:var(--text-soft);
 }
 
-/* Emoji effects */
-.unlocked::before{
-  content:'🎉 ';
+.badge{
+  position:absolute;
+  top:12px;
+  right:12px;
+  background:#2ecc71;
+  color:#003300;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
 }
-.locked::before{
-  content:'🔒 ';
+
+.popup{
+  position:fixed;
+  top:-100px;
+  left:50%;
+  transform:translateX(-50%);
+  background:linear-gradient(90deg,#3fa9f5,#00e0ff);
+  color:#002244;
+  padding:14px 22px;
+  border-radius:30px;
+  font-weight:600;
+  transition:.5s;
+  z-index:999;
 }
+
+.popup.show{top:20px}
 </style>
 </head>
+
 <body>
 
-
-<header>
-  <div class="header-left">
-    <img src="logo.png" alt="Logo" class="logo">
-  </div>
-  <div class="header-right">
-    <a href="profile.html" class="user-profile">
-      <span class="profile-icon">👤</span>
-    </a>
-  </div>
-</header>
-
-<a href="dashboard.html" 
-   style="display:inline-block;
-          padding:10px 20px;
-          background: linear-gradient(135deg,#00aaff,#0056cc);
-          color:#fff;
-          font-weight:600;
-          border-radius:18px;
-          text-decoration:none;
-          box-shadow:0 6px 15px rgba(0,0,0,0.3);
-          transition: all 0.3s;
-          font-family:'Segoe UI',sans-serif;">
-  ⬅ Back
-</a>
-
-<div style="max-width:1000px;margin:30px auto;padding:30px 20px;border-radius:20px;background:linear-gradient(135deg,#1a2b8f,#243bba);box-shadow:0 15px 30px rgba(0,0,0,0.5);color:#fff;text-align:center;">
-  <h1 style="font-size:28px;color:#00e0ff;margin-bottom:15px;text-shadow:0 0 6px #00aaff50;">🎯 Welcome to Rewards Dashboard!</h1>
-  <p style="font-size:16px;line-height:1.6;color:#cce0ff;margin-bottom:20px;">
-    Here you can track your progress, unlock amazing rewards based on your clicks and levels, and claim your bonuses. 
-    Earn more to unlock higher tier rewards and exclusive membership benefits. Stay active and maximize your rewards!
-  </p>
-  <a href="rule.html" style="display:inline-block;margin-top:10px;padding:12px 25px;background:#00aaff;color:#fff;font-weight:600;border-radius:12px;text-decoration:none;transition:all 0.3s;">
-    📖 View Full Details
-  </a>
-</div>
-
-
-
-
-<div class="section-title">Click Rewards</div>
-<div class="cards-container" id="clickRewardsContainer">
-  <!-- Click-based rewards loaded here -->
-</div>
-
-<div class="section-title">Level Rewards</div>
-<div class="cards-container" id="levelRewardsContainer">
-  <!-- Level-based rewards loaded here -->
-</div>
+<div id="spinner"><div class="loader"></div></div>
+<div class="container" id="cards"></div>
 
 <script type="module">
-// ===== Mock user data =====
-const user = {
-  totalClicks: 12000,
-  level: 6
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion } 
+from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBe3E2eSUaDH5rZHguezaHjbxKmRA5QVd4",
+  authDomain: "rewards-b8f54.firebaseapp.com",
+  projectId: "rewards-b8f54",
+  storageBucket: "rewards-b8f54.firebasestorage.app",
+  messagingSenderId: "588528777945",
+  appId: "1:588528777945:web:6dc9600f1f230e3813dcc8"
 };
 
-// ===== Fetch JSON rewards =====
-async function loadRewards(){
-  try{
-    // Click-based rewards
-    const clickRes = await fetch('clicks.json');
-    const clickRewards = await clickRes.json();
-    renderRewards(clickRewards,'clicks','clickRewardsContainer');
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getFirestore();
 
-    // Level-based rewards
-    const levelRes = await fetch('level.json');
-    const levelRewards = await levelRes.json();
-    renderRewards(levelRewards,'level','levelRewardsContainer');
+const popup = document.createElement("div");
+popup.className = "popup";
+popup.innerText = "Please check your redeem page and unlock your voucher";
+document.body.appendChild(popup);
 
-    // Animate progress bars
-    setTimeout(()=>{
-      document.querySelectorAll('.progress').forEach(p=>{
-        p.style.transition='width 1.5s ease-in-out';
-      });
-    },100);
+const showPopup = () => {
+  popup.classList.add("show");
+  setTimeout(()=>popup.classList.remove("show"),3000);
+};
 
-  } catch(err){
-    console.error("Error loading rewards:",err);
-  }
-}
+onAuthStateChanged(auth, async user => {
+  if(!user) return;
 
-// ===== Render function =====
-function renderRewards(rewards,type,containerId){
-  const container = document.getElementById(containerId);
-  rewards.forEach(r=>{
-    const card = document.createElement("div");
-    card.classList.add("card");
+  const userRef = doc(db,"users",user.uid);
+  const userSnap = await getDoc(userRef);
+  const userData = userSnap.data();
 
-    const title = document.createElement("h3");
-    title.textContent = `${r.icon} ${r.name}`;
+  document.getElementById("spinner").style.display="none";
 
-    const desc = document.createElement("p");
-    desc.textContent = r.amount;
+  loadCards(userRef,userData);
+});
 
-    const progressBar = document.createElement("div");
-    progressBar.classList.add("progress-bar");
-    const progress = document.createElement("div");
-    progress.classList.add("progress");
-    
-    let percent = 0;
-    if(type==='clicks') percent = Math.min((user.totalClicks/r.requirement)*100,100);
-    else percent = Math.min((user.level/r.requirement)*100,100);
-    progress.style.width = percent+"%";
+function loadCards(userRef,userData){
 
-    progressBar.appendChild(progress);
+fetch("data.json")
+.then(res=>res.json())
+.then(async data=>{
 
-    const label = document.createElement("div");
-    label.classList.add("level-label");
-    if(percent>=100){
-      label.textContent="Unlocked";
-      label.classList.add("unlocked");
-    } else {
-      label.textContent = type==='clicks' ? `${user.totalClicks} / ${r.requirement} Clicks`:`Level ${user.level} / ${r.requirement}`;
-      label.classList.add("locked");
+  const container = document.getElementById("cards");
+
+  for(const item of data){
+
+    let unlocked = false;
+    let rewardUnlock = 0;
+
+    const rewardRef = doc(db,"rewards",item.id);
+    const rewardSnap = await getDoc(rewardRef);
+
+    if(rewardSnap.exists()){
+      const reward = rewardSnap.data();
+
+      if(reward.type === "level"){
+        unlocked = userData.currentLevel >= reward.need;
+      }
+
+      if(reward.type === "engagement"){
+        unlocked = (userData.totalEngagement || 0) >= reward.need;
+      }
+
+      rewardUnlock = reward.unlock || 0;
     }
 
-    card.appendChild(title);
-    card.appendChild(desc);
-    card.appendChild(progressBar);
-    card.appendChild(label);
+    const completed = userData.redeemedVouchers?.includes(item.id);
+    const percent = Math.min((item.achieved/item.required)*100,100).toFixed(0);
+
+    const card = document.createElement("div");
+    card.className="card";
+
+    if(unlocked && !completed) card.classList.add("unlocked");
+    if(completed) card.classList.add("completed");
+
+    card.innerHTML = `
+      ${completed?`<div class="badge">COMPLETED</div>`:""}
+      <div>
+        <h3>${item.title}</h3>
+        <div class="sub">${percent}% completed</div>
+      </div>
+      <div>
+        <div class="progress-box"><div class="progress-bar"></div></div>
+        <div class="stats">
+          <span>${item.achieved} achieved</span>
+          <span>${item.required} required</span>
+        </div>
+      </div>
+    `;
 
     container.appendChild(card);
-  });
+    setTimeout(()=>card.querySelector(".progress-bar").style.width=percent+"%",100);
+
+    if(unlocked && !completed){
+      card.onclick = async ()=>{
+        showPopup();
+        await updateDoc(userRef,{
+          redeemedVouchers: arrayUnion(item.id),
+          totalEngagement: (userData.totalEngagement || 0) + rewardUnlock
+        });
+        card.classList.remove("unlocked");
+        card.classList.add("completed");
+        card.insertAdjacentHTML("afterbegin",`<div class="badge">COMPLETED</div>`);
+      };
+    }
+  }
+});
 }
-
-loadRewards();
-
 </script>
 
 </body>
